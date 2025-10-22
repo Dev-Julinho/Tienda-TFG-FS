@@ -8,6 +8,6 @@ Será una tienda de material Deportivo
 
 Mario Alberto scout
 Dusttin Lema boliviano
-Julio Cesar la bestia 
+Julio Cesar panqueque
 
 
