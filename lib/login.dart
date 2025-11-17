@@ -1,6 +1,5 @@
 import 'dart:ui';
 
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -27,6 +26,8 @@ class _LoginScreenState extends State<LoginScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Bienvenido a FitZone, $email 👋')),
       );
+      Navigator.pushReplacementNamed(context, "/home");
+
     }
   }
 
@@ -35,7 +36,6 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          /// 🌄 Fondo con nueva imagen de gimnasio
           SizedBox.expand(
             child: Image.network(
               'https://images.unsplash.com/photo-1605296867304-46d5465a13f1?auto=format&fit=crop&w=1000&q=80',
@@ -43,7 +43,6 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
 
-          /// 🌫️ Blur + overlay para que el formulario resalte
           BackdropFilter(
             filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
             child: Container(
@@ -51,14 +50,12 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
 
-          /// 📋 Contenido principal
           Center(
             child: SingleChildScrollView(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Logo circular con efecto glow
                   Container(
                     height: 90,
                     width: 90,
@@ -86,7 +83,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 20),
 
-                  // Nombre FitZone
                   const Text(
                     'FitZone',
                     style: TextStyle(
@@ -106,7 +102,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 40),
 
-                  // Tarjeta estilo glassmorphism
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
@@ -125,7 +120,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     child: Column(
                       children: [
-                        // Email
                         TextField(
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
@@ -137,7 +131,6 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(height: 16),
 
-                        // Password
                         TextField(
                           controller: _passwordController,
                           obscureText: !_isPasswordVisible,
@@ -161,8 +154,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                         const SizedBox(height: 24),
-
-                        // Botón login
                         SizedBox(
                           width: double.infinity,
                           height: 50,
@@ -205,8 +196,6 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
 
                   const SizedBox(height: 20),
-
-                  // Links inferiores
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
