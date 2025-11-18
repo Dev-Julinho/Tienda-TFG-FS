@@ -200,7 +200,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       TextButton(
-                        onPressed: () {},
+                        onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterScreen()),);},
                         child: const Text(
                           'Crear cuenta',
                           style: TextStyle(color: Colors.white70),
