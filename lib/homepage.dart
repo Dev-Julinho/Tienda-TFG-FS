@@ -1,17 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
-
-void main() => runApp(MyApp());
-
-class MyApp extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Mi App Flutter',
-      theme: ThemeData(primarySwatch: Colors.blue),
-      home: HomePage(),
-    );
-  }
-}
+import 'package:http/io_client.dart';
+import 'models/producto.dart';
+import 'models/categoria.dart';
 
 class HomePage extends StatefulWidget {
   @override
@@ -21,30 +13,128 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> {
   bool _isSearching = false;
   String _searchText = '';
-  String selectedFilter = 'Precio: Menor a Mayor';
 
-  List<String> filters = [
+  String selectedPriceFilter = 'Precio: Menor a Mayor';
+  String? selectedCategoriaFilter;
+
+  List<String> priceFilters = [
     'Precio: Menor a Mayor',
     'Precio: Mayor a Menor',
     'Más Populares',
     'Nuevos',
   ];
 
-  List<String> products = [
-    'Producto 1',
-    'Producto 2',
-    'Producto 3',
-    'Producto 4',
-    'Producto 5',
-  ];
+  late IOClient ioClient;
+
+  List<Producto> allProductos = [];
+  List<Producto> displayedProductos = [];
+  int page = 0;
+  final int pageSize = 10;
+
+  List<Categoria> categorias = [];
+
+  @override
+  void initState() {
+    super.initState();
+    HttpClient httpClient = HttpClient()
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+    ioClient = IOClient(httpClient);
+
+    _cargarCategoriasYProductos();
+  }
+
+  Future<void> _cargarCategoriasYProductos() async {
+    categorias = await traerCategorias(ioClient: ioClient);
+    allProductos = await traerProductos(ioClient: ioClient); // todos los productos
+    _aplicarFiltrosYPaginacion();
+  }
+
+  void _aplicarFiltrosYPaginacion() {
+    List<Producto> filtered = List.from(allProductos);
+
+    // Filtro por búsqueda
+    if (_searchText.isNotEmpty) {
+      filtered = filtered
+          .where((p) =>
+          p.nombre.toLowerCase().contains(_searchText.toLowerCase()))
+          .toList();
+    }
+
+    // Filtro por categoría
+    if (selectedCategoriaFilter != null && selectedCategoriaFilter!.isNotEmpty) {
+      filtered = filtered
+          .where((p) =>
+      categorias
+          .firstWhere((c) => c.nombre == selectedCategoriaFilter)
+          .id ==
+          p.idCategoria)
+          .toList();
+    }
+
+    // Orden por precio u otros filtros
+    switch (selectedPriceFilter) {
+      case 'Precio: Menor a Mayor':
+        filtered.sort((a, b) => a.precio.compareTo(b.precio));
+        break;
+      case 'Precio: Mayor a Menor':
+        filtered.sort((a, b) => b.precio.compareTo(a.precio));
+        break;
+      case 'Más Populares':
+        filtered.sort((a, b) => b.id.compareTo(a.id)); // ejemplo simple
+        break;
+      case 'Nuevos':
+        filtered.sort((a, b) => b.id.compareTo(a.id));
+        break;
+    }
+
+    // Paginación
+    int start = page * pageSize;
+    int end = start + pageSize;
+    if (start > filtered.length) start = filtered.length;
+    if (end > filtered.length) end = filtered.length;
+    displayedProductos = filtered.sublist(0, end);
+
+    setState(() {});
+  }
+
+  Future<List<Categoria>> traerCategorias({required IOClient ioClient}) async {
+    final res =
+    await ioClient.get(Uri.parse("http://185.189.221.84/api.php/records/Categoria"));
+    if (res.statusCode == 200) {
+      final data = jsonDecode(res.body);
+      return (data["records"] as List)
+          .map((e) => Categoria.fromJson(e))
+          .toList();
+    }
+    return [];
+  }
+
+  Future<List<Producto>> traerProductos({required IOClient ioClient}) async {
+    final res =
+    await ioClient.get(Uri.parse("http://185.189.221.84/api.php/records/Producto"));
+    if (res.statusCode == 200) {
+      final data = jsonDecode(res.body);
+      return (data["records"] as List)
+          .map((e) => Producto.fromJson(e))
+          .toList();
+    }
+    return [];
+  }
+
+  void _mostrarMas() {
+    page++;
+    _aplicarFiltrosYPaginacion();
+  }
+
+  @override
+  void dispose() {
+    ioClient.close();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Filtramos los productos según lo que se escribe
-    List<String> filteredProducts = products
-        .where((p) => p.toLowerCase().contains(_searchText.toLowerCase()))
-        .toList();
-
     return Scaffold(
       appBar: AppBar(
         title: _isSearching
@@ -55,9 +145,9 @@ class _HomePageState extends State<HomePage> {
             border: InputBorder.none,
           ),
           onChanged: (value) {
-            setState(() {
-              _searchText = value;
-            });
+            _searchText = value;
+            page = 0;
+            _aplicarFiltrosYPaginacion();
           },
         )
             : Text('Mi App', style: TextStyle(fontWeight: FontWeight.bold)),
@@ -69,65 +159,84 @@ class _HomePageState extends State<HomePage> {
                 if (_isSearching) {
                   _isSearching = false;
                   _searchText = '';
+                  page = 0;
+                  _aplicarFiltrosYPaginacion();
                 } else {
                   _isSearching = true;
                 }
               });
             },
           ),
-          IconButton(
-            icon: Icon(Icons.person),
-            onPressed: () {},
-          ),
-          IconButton(
-            icon: Icon(Icons.shopping_cart),
-            onPressed: () {},
-          ),
+          IconButton(icon: Icon(Icons.person), onPressed: () {}),
+          IconButton(icon: Icon(Icons.shopping_cart), onPressed: () {}),
         ],
-        leading: IconButton(
-          icon: Icon(Icons.menu),
-          onPressed: () {},
-        ),
+        leading: IconButton(icon: Icon(Icons.menu), onPressed: () {}),
       ),
       body: Column(
         children: [
-          // Filtro fijo arriba
-          Container(
-            color: Colors.white,
+          // Filtros de precio y categoría
+          Padding(
             padding: const EdgeInsets.all(8.0),
-            child: DropdownButton<String>(
-              value: selectedFilter,
-              isExpanded: true,
-              items: filters.map((String value) {
-                return DropdownMenuItem<String>(
-                  value: value,
-                  child: Text(value),
-                );
-              }).toList(),
-              onChanged: (newValue) {
-                setState(() {
-                  selectedFilter = newValue!;
-                });
-              },
+            child: Row(
+              children: [
+                Expanded(
+                  child: DropdownButton<String>(
+                    value: selectedPriceFilter,
+                    isExpanded: true,
+                    items: priceFilters
+                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                        .toList(),
+                    onChanged: (value) {
+                      selectedPriceFilter = value!;
+                      page = 0;
+                      _aplicarFiltrosYPaginacion();
+                    },
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: DropdownButton<String>(
+                    value: selectedCategoriaFilter,
+                    hint: Text("Seleccionar categoría"),
+                    isExpanded: true,
+                    items: categorias
+                        .map((c) =>
+                        DropdownMenuItem(value: c.nombre, child: Text(c.nombre)))
+                        .toList(),
+                    onChanged: (value) {
+                      selectedCategoriaFilter = value;
+                      page = 0;
+                      _aplicarFiltrosYPaginacion();
+                    },
+                  ),
+                ),
+              ],
             ),
           ),
-          // Lista de productos (scrollable)
+
+          // Lista de productos
           Expanded(
-            child: GridView.builder(
-              padding: EdgeInsets.all(8),
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                mainAxisSpacing: 8,
-                crossAxisSpacing: 8,
-                childAspectRatio: 3 / 4,
-              ),
-              itemCount: filteredProducts.length,
+            child: displayedProductos.isEmpty
+                ? Center(child: Text("No hay productos disponibles"))
+                : ListView.builder(
+              itemCount: displayedProductos.length + 1,
               itemBuilder: (context, index) {
-                return Card(
-                  elevation: 3,
-                  child: Center(
-                    child: Text(filteredProducts[index]),
-                  ),
+                if (index == displayedProductos.length) {
+                  // Botón mostrar más
+                  if (displayedProductos.length < allProductos.length) {
+                    return TextButton(
+                      onPressed: _mostrarMas,
+                      child: Text("Mostrar más"),
+                    );
+                  } else {
+                    return SizedBox.shrink();
+                  }
+                }
+
+                final producto = displayedProductos[index];
+                return ListTile(
+                  title: Text(producto.nombre),
+                  subtitle: Text("${producto.precio.toStringAsFixed(2)} €"),
                 );
               },
             ),
