@@ -1,9 +1,13 @@
 import 'dart:convert';
+import 'dart:io';
+
 // import 'dart:io';
 import 'dart:ui';
 import 'package:TFGPruebas/registro.dart';
+
 // import 'package:http/io_client.dart';
 import 'package:flutter/material.dart';
+import 'package:http/io_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
 
@@ -38,45 +42,45 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // // Crear un HttpClient que acepte certificados no válidos (solo pruebas)
-      // HttpClient httpClient = HttpClient()
-      //   ..badCertificateCallback =
-      //       (X509Certificate cert, String host, int port) => true;
-      // IOClient ioClient = IOClient(httpClient);
+      // Crear un HttpClient que acepte certificados no válidos (solo pruebas)
+      HttpClient httpClient = HttpClient()
+        ..badCertificateCallback =
+            (X509Certificate cert, String host, int port) => true;
+      IOClient ioClient = IOClient(httpClient);
 
-      // Hacer la petición GET usando IOClient
-      // final response = await ioClient.get(
-      final response = await http.get(
-        Uri.parse(
-            "https://185.189.221.84/api.php/records/Cliente?filter[]=email,eq,$email&filter[]=contrasena,eq,$password"),
-      );
+      //Hacer la petición GET usando IOClient
+      final response = await ioClient.get(
+      //final response = await http.get(
+      Uri.parse(
+      "https://185.189.221.84/api.php/records/Cliente?filter[]=email,eq,$email&filter[]=contrasena,eq,$password")
+    );
 
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
+    if (response.statusCode == 200) {
+    final data = json.decode(response.body);
 
-        if (data["records"].isNotEmpty) {
-          // LOGIN CORRECTO
-          if (_rememberMe) {
-            SharedPreferences prefs = await SharedPreferences.getInstance();
-            await prefs.setBool("isLoggedIn", true);
-            await prefs.setString("userEmail", email);
-          }
+    if (data["records"].isNotEmpty) {
+    // LOGIN CORRECTO
+    if (_rememberMe) {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setBool("isLoggedIn", true);
+    await prefs.setString("userEmail", email);
+    }
 
-          Navigator.pushReplacementNamed(context, "/home");
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Credenciales incorrectas')),
-          );
-        }
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error del servidor: ${response.statusCode}")),
-        );
-      }
+    Navigator.pushReplacementNamed(context, "/home");
+    } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(content: Text('Credenciales incorrectas')),
+    );
+    }
+    } else {
+    ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text("Error del servidor: ${response.statusCode}")),
+    );
+    }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error de conexión: $e")),
-      );
+    ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text("Error de conexión: $e")),
+    );
     }
 
     setState(() => _isLoading = false);
@@ -122,7 +126,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.fitness_center, color: Colors.white, size: 45),
+                    child: const Icon(
+                        Icons.fitness_center, color: Colors.white, size: 45),
                   ),
 
                   const SizedBox(height: 20),
@@ -159,7 +164,8 @@ class _LoginScreenState extends State<LoginScreen> {
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
                           style: const TextStyle(color: Colors.white),
-                          decoration: _inputDecoration('Correo electrónico', Icons.email),
+                          decoration: _inputDecoration(
+                              'Correo electrónico', Icons.email),
                         ),
                         const SizedBox(height: 16),
 
@@ -172,7 +178,8 @@ class _LoginScreenState extends State<LoginScreen> {
                             Icons.lock,
                             suffix: IconButton(
                               icon: Icon(
-                                _isPasswordVisible ? Icons.visibility : Icons.visibility_off,
+                                _isPasswordVisible ? Icons.visibility : Icons
+                                    .visibility_off,
                                 color: Colors.white70,
                               ),
                               onPressed: () {
@@ -199,7 +206,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               checkColor: Colors.black,
                               activeColor: Colors.greenAccent,
                             ),
-                            const Text("Recordarme", style: TextStyle(color: Colors.white70)),
+                            const Text("Recordarme",
+                                style: TextStyle(color: Colors.white70)),
                           ],
                         ),
 
@@ -218,15 +226,20 @@ class _LoginScreenState extends State<LoginScreen> {
                             ),
                             onPressed: _isLoading ? null : _login,
                             child: _isLoading
-                                ? const CircularProgressIndicator(color: Colors.white)
+                                ? const CircularProgressIndicator(
+                                color: Colors.white)
                                 : Ink(
                               decoration: const BoxDecoration(
                                 gradient: LinearGradient(
-                                  colors: [Color(0xFF00FF88), Color(0xFF00CC66)],
+                                  colors: [
+                                    Color(0xFF00FF88),
+                                    Color(0xFF00CC66)
+                                  ],
                                   begin: Alignment.centerLeft,
                                   end: Alignment.centerRight,
                                 ),
-                                borderRadius: BorderRadius.all(Radius.circular(14)),
+                                borderRadius: BorderRadius.all(
+                                    Radius.circular(14)),
                               ),
                               child: Container(
                                 alignment: Alignment.center,
@@ -254,7 +267,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       TextButton(
                         onPressed: () {
                           Navigator.push(context,
-                              MaterialPageRoute(builder: (_) => const RegisterScreen()));
+                              MaterialPageRoute(
+                                  builder: (_) => const RegisterScreen()));
                         },
                         child: const Text('Crear cuenta',
                             style: TextStyle(color: Colors.white70)),
@@ -270,7 +284,8 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  InputDecoration _inputDecoration(String label, IconData icon, {Widget? suffix}) {
+  InputDecoration _inputDecoration(String label, IconData icon,
+      {Widget? suffix}) {
     return InputDecoration(
       labelText: label,
       labelStyle: const TextStyle(color: Colors.white70),
