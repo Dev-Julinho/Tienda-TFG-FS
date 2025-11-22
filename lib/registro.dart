@@ -1,5 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
 import 'dart:ui';
+import 'package:http/io_client.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -21,7 +25,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool _isPasswordVisible = false;
 
-  void registrar() {
+  Future registrar() async {
     if (nombreController.text.isEmpty ||
         apellidosController.text.isEmpty ||
         emailController.text.isEmpty ||
@@ -31,13 +35,43 @@ class _RegisterScreenState extends State<RegisterScreen> {
       );
       return;
     }
+    try {
+      HttpClient httpClient = HttpClient()
+        ..badCertificateCallback =
+            (X509Certificate cert, String host, int port) => true;
+      IOClient ioClient = IOClient(httpClient);
+      final response = await ioClient.post(
+          Uri.parse("https://185.189.221.84/api.php/records/Cliente"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "nombre": nombreController.text,
+          "apellidos": apellidosController.text,
+          "email": emailController.text,
+          "contrasena": contrasenaController.text,
+          "telefono": telefonoController.text,
+          "direccion": direccionController.text,
+          "ciudad": ciudadController.text,
+          "codigo_postal": codigoPostalController.text,
+          "pais": paisController.text,
+        }),
+      );
 
-    // Investigar como hacer el post en la bbdd
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text("Cuenta creada correctamente ✔")),
-    );
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Cuenta creada correctamente",)),
+        );
+        Navigator.pop(context);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error al registrar: ${response.body}")),
+        );
+      }
 
-    Navigator.pop(context); // vuelve al login
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error de conexión: $e")),
+      );
+    }
   }
 
   @override

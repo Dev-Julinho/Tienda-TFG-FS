@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/io_client.dart';
+import 'miCuenta.dart';
 import 'models/producto.dart';
 import 'models/categoria.dart';
 
@@ -167,7 +168,7 @@ class _HomePageState extends State<HomePage> {
               });
             },
           ),
-          IconButton(icon: Icon(Icons.person), onPressed: () {}),
+          IconButton(icon: Icon(Icons.person), onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => MiCuentaPage()),);}),
           IconButton(icon: Icon(Icons.shopping_cart), onPressed: () {}),
         ],
         leading: IconButton(icon: Icon(Icons.menu), onPressed: () {}),

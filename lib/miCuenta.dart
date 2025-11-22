@@ -1,23 +1,82 @@
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:http/io_client.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'login.dart';
 
-class MiCuentaPage extends StatelessWidget {
+class MiCuentaPage extends StatefulWidget {
   const MiCuentaPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Datos de ejemplo (puedes conectar con tu BD o API)
-    final String nombre = "Juan Pérez";
-    final String email = "juanperez@example.com";
-    final String telefono = "+34 600 123 456";
-    final String imagenPerfil =
-        "https://i.pravatar.cc/300"; // Imagen de perfil de prueba
+  State<MiCuentaPage> createState() => _MiCuentaPageState();
+}
 
+class _MiCuentaPageState extends State<MiCuentaPage> {
+  late IOClient ioClient;
+  String nombre = "";
+  String email = "";
+  String telefono = "";
+  bool cargando = true;
+
+  final String apiUrl = "https://185.189.221.84/api.php/records/Cliente";
+
+  @override
+  void initState() {
+    super.initState();
+    // Crear HttpClient que acepte certificados no válidos (solo pruebas)
+    HttpClient httpClient = HttpClient()
+      ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+    ioClient = IOClient(httpClient);
+
+    _cargarDatosUsuario();
+  }
+
+  Future<void> _cargarDatosUsuario() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int? idCliente = prefs.getInt("id_cliente");
+
+    if (idCliente == null) {
+      setState(() {
+        cargando = false;
+      });
+      return;
+    }
+
+    final res = await ioClient.get(Uri.parse("$apiUrl/$idCliente"));
+
+    if (res.statusCode == 200) {
+      final data = jsonDecode(res.body);
+      setState(() {
+        nombre = data['nombre'] ?? "";
+        email = data['email'] ?? "";
+        telefono = data['telefono'] ?? "";
+        cargando = false;
+      });
+    } else {
+      setState(() {
+        cargando = false;
+      });
+      // Puedes mostrar un mensaje de error si quieres
+    }
+  }
+
+  @override
+  void dispose() {
+    ioClient.close();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text("Mi Cuenta"),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
+      body: cargando
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -25,7 +84,7 @@ class MiCuentaPage extends StatelessWidget {
             // Foto de perfil
             CircleAvatar(
               radius: 60,
-              backgroundImage: NetworkImage(imagenPerfil),
+              backgroundImage: NetworkImage("https://i.pravatar.cc/300"),
             ),
             const SizedBox(height: 20),
 
@@ -37,24 +96,18 @@ class MiCuentaPage extends StatelessWidget {
                 fontWeight: FontWeight.bold,
               ),
             ),
-
             const SizedBox(height: 5),
 
             // Email
             Text(
               email,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey[700],
-              ),
+              style: TextStyle(fontSize: 16, color: Colors.grey[700]),
             ),
-
             const SizedBox(height: 30),
 
             // Tarjeta con datos
             Card(
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(15)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
               elevation: 3,
               child: Padding(
                 padding: const EdgeInsets.all(20),
@@ -73,7 +126,6 @@ class MiCuentaPage extends StatelessWidget {
                       ],
                     ),
                     const Divider(height: 25),
-
                     Row(
                       children: [
                         const Icon(Icons.email, size: 28),
@@ -97,11 +149,14 @@ class MiCuentaPage extends StatelessWidget {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Sesión cerrada"),
-                    ),
+                onPressed: () async {
+                  final prefs = await SharedPreferences.getInstance();
+                  await prefs.setBool("isLoggedIn", false);
+
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                        (route) => false,
                   );
                 },
                 style: ElevatedButton.styleFrom(

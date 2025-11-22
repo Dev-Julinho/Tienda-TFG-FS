@@ -1,11 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
-
-// import 'dart:io';
 import 'dart:ui';
 import 'package:TFGPruebas/registro.dart';
-
-// import 'package:http/io_client.dart';
 import 'package:flutter/material.dart';
 import 'package:http/io_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -60,11 +56,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
     if (data["records"].isNotEmpty) {
     // LOGIN CORRECTO
-    if (_rememberMe) {
+    final user = data["records"][0];
     SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (_rememberMe) {
     await prefs.setBool("isLoggedIn", true);
-    await prefs.setString("userEmail", email);
     }
+    await prefs.setInt("id_cliente", user["id_cliente"]);
+    await prefs.setString("userNombre", user["nombre"]);
+    await prefs.setString("userEmail", user["email"]);
 
     Navigator.pushReplacementNamed(context, "/home");
     } else {
