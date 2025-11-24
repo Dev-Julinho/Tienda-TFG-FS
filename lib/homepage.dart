@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+import 'package:TFGPruebas/productoDetalle.dart';
 import 'package:flutter/material.dart';
 import 'package:http/io_client.dart';
 import 'miCuenta.dart';
@@ -82,10 +83,10 @@ class _HomePageState extends State<HomePage> {
         filtered.sort((a, b) => b.precio.compareTo(a.precio));
         break;
       case 'Más Populares':
-        filtered.sort((a, b) => b.id.compareTo(a.id)); // ejemplo simple
+        filtered.sort((a, b) => b.id.compareTo(a.id)); //Quitar o revisar
         break;
       case 'Nuevos':
-        filtered.sort((a, b) => b.id.compareTo(a.id));
+        filtered.sort((a, b) => b.id.compareTo(a.id)); //Quitar o revisar
         break;
     }
 
@@ -238,7 +239,16 @@ class _HomePageState extends State<HomePage> {
                 return ListTile(
                   title: Text(producto.nombre),
                   subtitle: Text("${producto.precio.toStringAsFixed(2)} €"),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => ProductoDetalle(producto: producto),
+                      ),
+                    );
+                  },
                 );
+
               },
             ),
           ),
