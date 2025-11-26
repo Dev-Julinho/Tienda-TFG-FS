@@ -1,6 +1,61 @@
+import 'dart:typed_data';
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:http/io_client.dart';
 import 'models/producto.dart';
 
+// Widget para cargar imágenes de manera insegura (acepta certificados self-signed)
+class InsecureImage extends StatelessWidget {
+  final String url;
+  final BoxFit fit;
+
+  const InsecureImage({super.key, required this.url, this.fit = BoxFit.cover});
+
+  Future<Uint8List?> _loadImage() async {
+    HttpClient httpClient = HttpClient()
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+
+    IOClient client = IOClient(httpClient);
+
+    try {
+      final response = await client.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        return response.bodyBytes;
+      } else {
+        print("IMAGEN ERROR STATUS: ${response.statusCode}");
+        return null;
+      }
+    } catch (e) {
+      print("IMAGEN ERROR: $e");
+      return null;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<Uint8List?>(
+      future: _loadImage(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (!snapshot.hasData || snapshot.data == null) {
+          return const Icon(Icons.error, color: Colors.red, size: 80);
+        }
+        try {
+          return Image.memory(snapshot.data!, fit: fit, width: double.infinity);
+        } catch (e) {
+          print("ERROR DECODIFICANDO IMG: $e");
+          return const Icon(Icons.broken_image, color: Colors.grey, size: 80);
+        }
+      },
+    );
+
+  }
+}
+
+// Pantalla de detalle del producto
 class ProductoDetalle extends StatelessWidget {
   final Producto producto;
 
@@ -8,6 +63,9 @@ class ProductoDetalle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Construimos la URL dinámica usando el id del producto
+    final String imageUrl = "https://185.189.221.84/images/${producto.id}.jpg";
+
     return Scaffold(
       appBar: AppBar(
         title: Text(producto.nombre),
@@ -18,12 +76,11 @@ class ProductoDetalle extends StatelessWidget {
           Container(
             width: double.infinity,
             height: 250,
-            color: Colors.grey[300],
+            color: Colors.black,
             alignment: Alignment.center,
-            child: const Icon(
-              Icons.photo,
-              size: 80,
-              color: Colors.grey,
+            child: InsecureImage(
+              url: imageUrl,
+              fit: BoxFit.contain,
             ),
           ),
           Expanded(
@@ -50,7 +107,9 @@ class ProductoDetalle extends StatelessWidget {
                   ),
                   const SizedBox(height: 20),
                   Text(
-                    producto.descripcion ?? "Sin descripción disponible",
+                    producto.descripcion.isNotEmpty
+                        ? producto.descripcion
+                        : "Sin descripción disponible",
                     style: const TextStyle(fontSize: 18),
                   ),
                 ],
@@ -68,7 +127,7 @@ class ProductoDetalle extends StatelessWidget {
                   textStyle: const TextStyle(fontSize: 20),
                 ),
                 onPressed: () {
-                  // Añadir para mandar a la pantalla compra
+                  // Acción de compra
                   print("Comprar producto -> ${producto.nombre}");
                 },
                 child: const Text("Comprar"),

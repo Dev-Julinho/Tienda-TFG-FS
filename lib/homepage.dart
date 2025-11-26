@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:TFGPruebas/productoDetalle.dart';
 import 'package:flutter/material.dart';
 import 'package:http/io_client.dart';
+import 'Cesta.dart';
 import 'miCuenta.dart';
 import 'models/producto.dart';
 import 'models/categoria.dart';
@@ -170,7 +171,7 @@ class _HomePageState extends State<HomePage> {
             },
           ),
           IconButton(icon: Icon(Icons.person), onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => MiCuentaPage()),);}),
-          IconButton(icon: Icon(Icons.shopping_cart), onPressed: () {}),
+          IconButton(icon: Icon(Icons.shopping_cart), onPressed: () {Navigator.push(context, MaterialPageRoute(builder: (context) => CarritoPage()),);}),
         ],
         leading: IconButton(icon: Icon(Icons.menu), onPressed: () {}),
       ),
@@ -237,6 +238,13 @@ class _HomePageState extends State<HomePage> {
 
                 final producto = displayedProductos[index];
                 return ListTile(
+                  leading: Image.network(
+                    "https://185.189.221.84/images/${producto.id}.jpg",
+                    width: 60,
+                    height: 60,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) => Icon(Icons.broken_image),
+                  ),
                   title: Text(producto.nombre),
                   subtitle: Text("${producto.precio.toStringAsFixed(2)} €"),
                   onTap: () {
@@ -248,7 +256,6 @@ class _HomePageState extends State<HomePage> {
                     );
                   },
                 );
-
               },
             ),
           ),
