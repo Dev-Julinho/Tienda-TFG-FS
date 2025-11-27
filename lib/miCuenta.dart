@@ -17,6 +17,7 @@ class _MiCuentaPageState extends State<MiCuentaPage> {
   String nombre = "";
   String email = "";
   String telefono = "";
+  String direccion = "";
   bool cargando = true;
 
   final String apiUrl = "https://185.189.221.84/api.php/records/Cliente";
@@ -51,6 +52,7 @@ class _MiCuentaPageState extends State<MiCuentaPage> {
         nombre = data['nombre'] ?? "";
         email = data['email'] ?? "";
         telefono = data['telefono'] ?? "";
+        direccion = data['direccion'] ?? "";
         cargando = false;
       });
     } else {
@@ -138,6 +140,19 @@ class _MiCuentaPageState extends State<MiCuentaPage> {
                         ),
                       ],
                     ),
+                    const Divider(height: 25),
+                    Row(
+                      children: [
+                        const Icon(Icons.directions, size: 28),
+                        const SizedBox(width: 15),
+                        Expanded(
+                          child: Text(
+                            direccion,
+                            style: const TextStyle(fontSize: 17),
+                          ),
+                        )
+                      ],
+                    )
                   ],
                 ),
               ),

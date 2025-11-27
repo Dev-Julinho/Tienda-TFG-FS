@@ -73,7 +73,7 @@ class _HomePageState extends State<HomePage> {
             setState(() {});
           },
         )
-            : Text('Mi App', style: TextStyle(fontWeight: FontWeight.bold)),
+            : Text('FitZone', style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
             icon: Icon(Icons.person),
