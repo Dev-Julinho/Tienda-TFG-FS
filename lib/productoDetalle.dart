@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/io_client.dart';
+import 'Cesta.dart';
 import 'models/producto.dart';
 
 // Widget para cargar imágenes de manera insegura (acepta certificados self-signed)
@@ -127,10 +128,17 @@ class ProductoDetalle extends StatelessWidget {
                   textStyle: const TextStyle(fontSize: 20),
                 ),
                 onPressed: () {
-                  // Acción de compra
-                  print("Comprar producto -> ${producto.nombre}");
+                  CarritoPage.carrito.add({
+                    "nombre": producto.nombre,
+                    "precio": producto.precio,
+                    "cantidad": 1,
+                  });
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Producto añadido al carrito correctamente")),
+                  );
                 },
-                child: const Text("Comprar"),
+                child: const Text("Añadir al Carrito"),
               ),
             ),
           ),
