@@ -76,19 +76,6 @@ class _HomePageState extends State<HomePage> {
             : Text('Mi App', style: TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           IconButton(
-            icon: Icon(_isSearching ? Icons.close : Icons.search),
-            onPressed: () {
-              setState(() {
-                if (_isSearching) {
-                  _isSearching = false;
-                  _searchText = '';
-                } else {
-                  _isSearching = true;
-                }
-              });
-            },
-          ),
-          IconButton(
             icon: Icon(Icons.person),
             onPressed: () {
               Navigator.push(
@@ -157,7 +144,7 @@ class _HomePageState extends State<HomePage> {
                     borderRadius: BorderRadius.vertical(
                         bottom: Radius.circular(12)),
                     child: Image.network(
-                      "https://185.189.221.84/images/categorias/c${categoria.id}.jpg",
+                      "https://185.189.221.84/images/c${categoria.id}.jpg",
                       height: 160,
                       width: double.infinity,
                       fit: BoxFit.cover,
