@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as ioClient;
-
 import 'Cesta.dart';
 import 'models/producto.dart';
 import 'models/stock.dart';
@@ -31,25 +30,20 @@ class _ProductoDetalleState extends State<ProductoDetalle> {
   Future<void> _cargarTallasYStock() async {
     try {
       // Traer todas las tallas
-      final resTallas = await ioClient.get(
-          Uri.parse("http://185.189.221.84/api.php/records/Tallas"));
+      final resTallas = await ioClient.get(Uri.parse("http://185.189.221.84/api.php/records/Tallas"));
       final dataTallas = jsonDecode(resTallas.body);
       final List<dynamic> listaTallas = dataTallas["records"] ?? [];
       todasTallas = listaTallas.map((e) => Talla.fromJson(e)).toList();
 
       // Traer todo el stock
-      final resStock =
-      await ioClient.get(Uri.parse("http://185.189.221.84/api.php/records/Stock"));
+      final resStock = await ioClient.get(Uri.parse("http://185.189.221.84/api.php/records/Stock"));
       final dataStock = jsonDecode(resStock.body);
       final List<dynamic> listaStock = dataStock["records"] ?? [];
       List<Stock> allStock = listaStock.map((e) => Stock.fromJson(e)).toList();
 
       // Filtrar solo el stock del producto actual
-      stockProducto =
-          allStock.where((s) => s.idProducto == widget.producto.id).toList();
+      stockProducto = allStock.where((s) => s.idProducto == widget.producto.id).toList();
 
-      // Ordenar por talla (opcional)
-      stockProducto.sort((a, b) => a.idTalla.compareTo(b.idTalla));
     } catch (e) {
       print("Error cargando tallas/stock: $e");
     } finally {
@@ -94,21 +88,17 @@ class _ProductoDetalleState extends State<ProductoDetalle> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(widget.producto.nombre,
-                      style: const TextStyle(
-                          fontSize: 28, fontWeight: FontWeight.bold)),
+                      style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   Text("${widget.producto.precio.toStringAsFixed(2)} €",
                       style: const TextStyle(
-                          fontSize: 22,
-                          color: Colors.green,
-                          fontWeight: FontWeight.w600)),
+                          fontSize: 22, color: Colors.green, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 20),
 
-                  // Dropdown de tallas
+                  // Dropdown de tallas encima de la descripción
                   if (stockProducto.isNotEmpty) ...[
-                    const Text("Tallas disponibles:",
-                        style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold)),
+                    const Text("Selecciona talla:",
+                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 10),
                     DropdownButton<String>(
                       value: selectedTallaId,
@@ -117,8 +107,7 @@ class _ProductoDetalleState extends State<ProductoDetalle> {
                       items: stockProducto.map((s) {
                         final talla = todasTallas.firstWhere(
                               (t) => t.id.toString() == s.idTalla.toString(),
-                          orElse: () =>
-                              Talla(id: s.idTalla, talla: "Desconocida"),
+                          orElse: () => Talla(id: s.idTalla, talla: "Desconocida"),
                         );
                         return DropdownMenuItem<String>(
                           value: s.idTalla.toString(),
@@ -132,10 +121,9 @@ class _ProductoDetalleState extends State<ProductoDetalle> {
                       },
                     ),
                     const SizedBox(height: 20),
-                  ] else
-                    const Text("No hay tallas disponibles"),
+                  ],
 
-                  // Descripción
+                  // Descripción del producto
                   Text(
                     widget.producto.descripcion.isNotEmpty
                         ? widget.producto.descripcion
@@ -146,6 +134,8 @@ class _ProductoDetalleState extends State<ProductoDetalle> {
               ),
             ),
           ),
+
+          // Botón añadir al carrito
           Padding(
             padding: const EdgeInsets.all(20),
             child: SizedBox(
@@ -160,40 +150,28 @@ class _ProductoDetalleState extends State<ProductoDetalle> {
                     : () {
                   final tallaSeleccionada = todasTallas.firstWhere(
                         (t) => t.id.toString() == selectedTallaId,
-                    orElse: () => Talla(
-                        id: int.parse(selectedTallaId!), talla: "Desconocida"),
+                    orElse: () => Talla(id: int.parse(selectedTallaId!), talla: "Desconocida"),
                   );
+
                   final stockSeleccionado = stockProducto.firstWhere(
                         (s) => s.idTalla.toString() == selectedTallaId,
-                    orElse: () => Stock(
-                        idProducto: widget.producto.id,
-                        idTalla: int.parse(selectedTallaId!),
-                        cantidad: 0),
+                    orElse: () => Stock(idProducto: widget.producto.id, idTalla: int.parse(selectedTallaId!), cantidad: 0),
                   );
 
-                  if (stockSeleccionado.cantidad > 0) {
-                    // Añadir al carrito
-                    CarritoPage.carrito.add({
-                      "nombre": widget.producto.nombre,
-                      "precio": widget.producto.precio,
-                      "talla": tallaSeleccionada.talla,
-                      "cantidad": 1,
-                    });
+                  // Añadir al carrito con stockMax
+                  CarritoPage.carrito.add({
+                    "nombre": widget.producto.nombre,
+                    "precio": widget.producto.precio,
+                    "talla": tallaSeleccionada.talla,
+                    "idProducto": widget.producto.id,
+                    "idTalla": stockSeleccionado.idTalla,
+                    "cantidad": 1,
+                    "stockMax": stockSeleccionado.cantidad,
+                  });
 
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text(
-                            "Producto añadido al carrito correctamente"),
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Text(
-                            "La talla ${tallaSeleccionada.talla} no tiene stock disponible"),
-                      ),
-                    );
-                  }
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Producto añadido al carrito correctamente")),
+                  );
                 },
                 child: const Text("Añadir al Carrito"),
               ),

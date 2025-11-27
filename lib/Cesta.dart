@@ -49,7 +49,7 @@ class _CarritoPageState extends State<CarritoPage> {
                           fontSize: 18, fontWeight: FontWeight.bold),
                     ),
                     subtitle: Text(
-                        "€${item["precio"].toStringAsFixed(2)}"),
+                        "€${item["precio"].toStringAsFixed(2)} | Talla: ${item["talla"]}"),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -59,7 +59,6 @@ class _CarritoPageState extends State<CarritoPage> {
                           onPressed: () {
                             setState(() {
                               item["cantidad"]--;
-
                               if (item["cantidad"] <= 0) {
                                 carrito.removeAt(index);
                               }
@@ -69,18 +68,30 @@ class _CarritoPageState extends State<CarritoPage> {
                         Text(
                           item["cantidad"].toString(),
                           style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold),
+                              fontSize: 18, fontWeight: FontWeight.bold),
                         ),
                         IconButton(
-                          icon: const Icon(Icons.add_circle,
-                              color: Colors.green),
+                          icon: Icon(
+                            Icons.add_circle,
+                            color: item["cantidad"] >= item["stockMax"] ? Colors.grey : Colors.green,
+                          ),
                           onPressed: () {
+                            if (item["cantidad"] >= item["stockMax"]) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                      "No puedes agregar más de ${item["stockMax"]} unidades, fin del stock"),
+                                  duration: const Duration(seconds: 2),
+                                ),
+                              );
+                              return;
+                            }
                             setState(() {
                               item["cantidad"]++;
                             });
                           },
                         ),
+
                       ],
                     ),
                   ),
@@ -129,8 +140,7 @@ class _CarritoPageState extends State<CarritoPage> {
                     },
                     style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.green,
-                        padding:
-                        const EdgeInsets.symmetric(vertical: 15)),
+                        padding: const EdgeInsets.symmetric(vertical: 15)),
                     child: const Text(
                       "Finalizar compra",
                       style: TextStyle(fontSize: 18),
@@ -150,8 +160,7 @@ class _CarritoPageState extends State<CarritoPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.shopping_cart_outlined,
-              size: 80, color: Colors.grey),
+          Icon(Icons.shopping_cart_outlined, size: 80, color: Colors.grey),
           SizedBox(height: 20),
           Text(
             "Tu carrito está vacío",
