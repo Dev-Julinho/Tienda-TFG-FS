@@ -30,20 +30,25 @@ class _ProductoDetalleState extends State<ProductoDetalle> {
   Future<void> _cargarTallasYStock() async {
     try {
       // Traer todas las tallas
-      final resTallas = await ioClient.get(Uri.parse("http://185.189.221.84/api.php/records/Tallas"));
+      final resTallas = await ioClient.get(
+          Uri.parse("http://185.189.221.84/api.php/records/Tallas"));
       final dataTallas = jsonDecode(resTallas.body);
       final List<dynamic> listaTallas = dataTallas["records"] ?? [];
       todasTallas = listaTallas.map((e) => Talla.fromJson(e)).toList();
 
       // Traer todo el stock
-      final resStock = await ioClient.get(Uri.parse("http://185.189.221.84/api.php/records/Stock"));
+      final resStock = await ioClient
+          .get(Uri.parse("http://185.189.221.84/api.php/records/Stock"));
       final dataStock = jsonDecode(resStock.body);
       final List<dynamic> listaStock = dataStock["records"] ?? [];
       List<Stock> allStock = listaStock.map((e) => Stock.fromJson(e)).toList();
 
       // Filtrar solo el stock del producto actual
-      stockProducto = allStock.where((s) => s.idProducto == widget.producto.id).toList();
+      stockProducto =
+          allStock.where((s) => s.idProducto == widget.producto.id).toList();
 
+      // Ordenar stockProducto por idTalla de menor a mayor
+      stockProducto.sort((a, b) => a.idTalla.compareTo(b.idTalla));
     } catch (e) {
       print("Error cargando tallas/stock: $e");
     } finally {
@@ -88,17 +93,21 @@ class _ProductoDetalleState extends State<ProductoDetalle> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(widget.producto.nombre,
-                      style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold)),
+                      style: const TextStyle(
+                          fontSize: 28, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
                   Text("${widget.producto.precio.toStringAsFixed(2)} €",
                       style: const TextStyle(
-                          fontSize: 22, color: Colors.green, fontWeight: FontWeight.w600)),
+                          fontSize: 22,
+                          color: Colors.green,
+                          fontWeight: FontWeight.w600)),
                   const SizedBox(height: 20),
 
                   // Dropdown de tallas encima de la descripción
                   if (stockProducto.isNotEmpty) ...[
                     const Text("Selecciona talla:",
-                        style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                        style: TextStyle(
+                            fontSize: 20, fontWeight: FontWeight.bold)),
                     const SizedBox(height: 10),
                     DropdownButton<String>(
                       value: selectedTallaId,
@@ -150,12 +159,16 @@ class _ProductoDetalleState extends State<ProductoDetalle> {
                     : () {
                   final tallaSeleccionada = todasTallas.firstWhere(
                         (t) => t.id.toString() == selectedTallaId,
-                    orElse: () => Talla(id: int.parse(selectedTallaId!), talla: "Desconocida"),
+                    orElse: () =>
+                        Talla(id: int.parse(selectedTallaId!), talla: "Desconocida"),
                   );
 
                   final stockSeleccionado = stockProducto.firstWhere(
                         (s) => s.idTalla.toString() == selectedTallaId,
-                    orElse: () => Stock(idProducto: widget.producto.id, idTalla: int.parse(selectedTallaId!), cantidad: 0),
+                    orElse: () => Stock(
+                        idProducto: widget.producto.id,
+                        idTalla: int.parse(selectedTallaId!),
+                        cantidad: 0),
                   );
 
                   // Añadir al carrito con stockMax

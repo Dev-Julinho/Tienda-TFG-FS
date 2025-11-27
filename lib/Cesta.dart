@@ -142,7 +142,7 @@ class _CarritoPageState extends State<CarritoPage> {
                         backgroundColor: Colors.green,
                         padding: const EdgeInsets.symmetric(vertical: 15)),
                     child: const Text(
-                      "Finalizar compra",
+                      "Continuar",
                       style: TextStyle(fontSize: 18),
                     ),
                   ),
