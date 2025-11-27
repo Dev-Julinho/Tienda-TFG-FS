@@ -90,7 +90,6 @@ class _HomePageState extends State<HomePage> {
             },
           ),
         ],
-        leading: IconButton(icon: Icon(Icons.menu), onPressed: () {}),
       ),
 
       body: categorias.isEmpty
