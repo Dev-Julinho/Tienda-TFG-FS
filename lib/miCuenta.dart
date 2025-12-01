@@ -86,7 +86,7 @@ class _MiCuentaPageState extends State<MiCuentaPage> {
             // Foto de perfil
             CircleAvatar(
               radius: 60,
-              backgroundImage: NetworkImage("https://i.pravatar.cc/300"),
+              backgroundImage: NetworkImage("https://api.dicebear.com/6.x/identicon/png?seed=${DateTime.now().millisecondsSinceEpoch}"),
             ),
             const SizedBox(height: 20),
 
