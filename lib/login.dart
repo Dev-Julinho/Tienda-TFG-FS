@@ -1,11 +1,10 @@
-import 'dart:convert';
+ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 import 'package:TFGPruebas/registro.dart';
 import 'package:flutter/material.dart';
 import 'package:http/io_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:http/http.dart' as http;
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});

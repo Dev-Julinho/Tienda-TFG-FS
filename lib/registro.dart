@@ -3,7 +3,6 @@ import 'dart:io';
 import 'dart:ui';
 import 'package:http/io_client.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
