@@ -1,6 +1,8 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
+import 'services/cestaService.dart';
 
 class DetallePedidoPage extends StatefulWidget {
   final int pedidoId;
@@ -12,59 +14,80 @@ class DetallePedidoPage extends StatefulWidget {
 }
 
 class _DetallePedidoPageState extends State<DetallePedidoPage> {
-  final String baseUrl = "https://185.189.221.84/api.php";
-
-  bool loading = true;
-  bool error = false;
-  String errorMsg = "";
-
-  List<dynamic> lineas = [];
-  Map<String, dynamic>? pedidoInfo;
+  late IOClient ioClient;
+  bool cargando = true;
+  String? error;
+  List<Map<String, dynamic>> productos = [];
 
   @override
   void initState() {
     super.initState();
-    _fetchDetallePedido();
+
+    // HttpClient que acepta certificados inválidos (solo pruebas)
+    HttpClient httpClient = HttpClient()
+      ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+    ioClient = IOClient(httpClient);
+
+    _cargarProductos();
   }
 
-  Future<void> _fetchDetallePedido() async {
+  Future<void> _cargarProductos() async {
     setState(() {
-      loading = true;
-      error = false;
+      cargando = true;
+      error = null;
     });
 
     try {
-      // 1️⃣ Obtener info básica del pedido
-      final pedidoRes = await http.get(
-        Uri.parse("$baseUrl/records/Pedido/${widget.pedidoId}"),
-      );
+      // Usamos CestaService para obtener los productos del pedido
+      final res = await ioClient.get(Uri.parse(
+          "${CestaService.baseUrl}/records/Detalle_Pedido?filter=id_pedido,eq,${widget.pedidoId}"));
 
-      // 2️⃣ Obtener líneas del pedido
-      final lineasRes = await http.get(
-        Uri.parse(
-          "$baseUrl/records/Detalle_Pedido?filter=id_pedido,eq,${widget.pedidoId}",
-        ),
-      );
-
-      if (pedidoRes.statusCode != 200 || lineasRes.statusCode != 200) {
-        throw Exception("Error al cargar datos del pedido");
+      if (res.statusCode != 200) {
+        setState(() {
+          cargando = false;
+          error = "Error del servidor: ${res.statusCode}";
+        });
+        return;
       }
 
-      final pedidoData = jsonDecode(pedidoRes.body);
-      final lineasData = jsonDecode(lineasRes.body);
+      final data = jsonDecode(res.body);
+      final List<dynamic> lista = data["records"] ?? [];
+
+      // Obtenemos info de cada producto
+      List<Map<String, dynamic>> temp = [];
+      for (var item in lista) {
+        final idProducto = item["id_producto"];
+        final resProd = await ioClient.get(Uri.parse("${CestaService.baseUrl}/records/Producto/$idProducto"));
+        final dataProd = jsonDecode(resProd.body);
+
+        temp.add({
+          "nombre": dataProd["nombre"] ?? "Producto",
+          "imagen": dataProd["imagen"] ?? null,
+          "cantidad": int.parse(item["cantidad"].toString()),
+          "precio_unitario": double.parse(item["precio_unitario"].toString()),
+          "talla": item["id_talla"].toString(), // podrías mapear a la talla real si quieres
+        });
+      }
 
       setState(() {
-        pedidoInfo = pedidoData;
-        lineas = lineasData['records'] ?? [];
-        loading = false;
+        productos = temp;
+        cargando = false;
       });
     } catch (e) {
       setState(() {
-        loading = false;
-        error = true;
-        errorMsg = "Error cargando detalle: $e";
+        cargando = false;
+        error = "Error cargando productos: $e";
       });
     }
+  }
+
+  double get total =>
+      productos.fold(0, (sum, p) => sum + p["precio_unitario"] * p["cantidad"]);
+
+  @override
+  void dispose() {
+    ioClient.close();
+    super.dispose();
   }
 
   @override
@@ -74,136 +97,52 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
         title: Text("Pedido #${widget.pedidoId}"),
         centerTitle: true,
       ),
-      body: loading
+      body: cargando
           ? const Center(child: CircularProgressIndicator())
-          : error
-          ? Center(
-        child: Text(
-          errorMsg,
-          style: const TextStyle(color: Colors.red),
-        ),
-      )
-          : SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildInfoPedido(),
-            const SizedBox(height: 25),
-            const Text(
-              "Productos",
-              style: TextStyle(
-                  fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            ...lineas.map((item) => _buildProducto(item)).toList(),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoPedido() {
-    if (pedidoInfo == null) return const SizedBox();
-
-    final String fecha = pedidoInfo!['fecha_pedido'] ?? '-';
-    final String total = pedidoInfo!['total']?.toString() ?? "0";
-    final String metodoPago =
-        pedidoInfo!['id_metodo_pago']?.toString() ?? "-";
-    final String empresa = pedidoInfo!['id_empresa']?.toString() ?? "-";
-
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      elevation: 2,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              "Información del pedido",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 10),
-            _infoRow("Fecha:", fecha),
-            _infoRow("Empresa:", empresa),
-            _infoRow("Método de pago:", metodoPago),
-            const Divider(height: 25),
-            Align(
-              alignment: Alignment.centerRight,
-              child: Text(
-                "Total: €$total",
-                style:
-                const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildProducto(Map<String, dynamic> item) {
-    final String producto =
-        item['nombre_producto']?.toString() ?? "Producto";
-    final String talla = item['talla']?.toString() ?? "-";
-    final int cantidad =
-        int.tryParse(item['cantidad']?.toString() ?? '1') ?? 1;
-    final double precio =
-        double.tryParse(item['precio']?.toString() ?? '0') ?? 0;
-
-    final double subtotal = cantidad * precio;
-
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      elevation: 1.5,
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              producto,
-              style: const TextStyle(
-                  fontSize: 17, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 6),
-            Text("Talla: $talla"),
-            Text("Cantidad: $cantidad"),
-            const Divider(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "€${precio.toStringAsFixed(2)} / ud",
-                  style: const TextStyle(fontSize: 15),
-                ),
-                Text(
-                  "Subtotal: €${subtotal.toStringAsFixed(2)}",
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _infoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
-      child: Row(
+          : error != null
+          ? Center(child: Text(error!, style: const TextStyle(color: Colors.red)))
+          : Column(
         children: [
           Expanded(
-              flex: 2,
-              child: Text(label,
-                  style: const TextStyle(fontWeight: FontWeight.bold))),
-          Expanded(flex: 3, child: Text(value)),
+            child: ListView.builder(
+              itemCount: productos.length,
+              itemBuilder: (context, index) {
+                final prod = productos[index];
+                return Card(
+                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12)),
+                  elevation: 2,
+                  child: ListTile(
+                    leading: prod["imagen"] != null
+                        ? Image.network(prod["imagen"], width: 50, height: 50, fit: BoxFit.cover)
+                        : const Icon(Icons.image, size: 50),
+                    title: Text(prod["nombre"], style: const TextStyle(fontWeight: FontWeight.bold)),
+                    subtitle: Text("Talla: ${prod["talla"]}\nCantidad: ${prod["cantidad"]}"),
+                    trailing: Text(
+                      "€${(prod["precio_unitario"] * prod["cantidad"]).toStringAsFixed(2)}",
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                );
+              },
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(16),
+            color: Colors.grey[200],
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text("Total:",
+                    style: TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold)),
+                Text("€${total.toStringAsFixed(2)}",
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold)),
+              ],
+            ),
+          )
         ],
       ),
     );
