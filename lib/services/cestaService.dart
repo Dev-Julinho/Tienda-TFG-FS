@@ -4,6 +4,7 @@ import 'package:http/io_client.dart';
 import '../models/producto.dart';
 import '../models/stock.dart';
 import '../Cesta.dart';
+import '../models/talla.dart';
 
 class CestaService {
   static const String baseUrl = "https://185.189.221.84/api.php";
@@ -71,32 +72,39 @@ class CestaService {
     if (idPedido == null) return;
 
     try {
-      // Comprobar si existe detalle
+      // ⚠️ OJO: ahora también filtramos por id_talla
       final resDetalle = await _ioClient.get(Uri.parse(
-          "$baseUrl/records/Detalle_Pedido?filter=id_pedido,eq,$idPedido&filter=id_producto,eq,${producto.id}"));
+          "$baseUrl/records/Detalle_Pedido?filter=id_pedido,eq,$idPedido"
+              "&filter=id_producto,eq,${producto.id}"
+              "&filter=id_talla,eq,${stockSeleccionado.idTalla}"
+      ));
+
       final dataDetalle = jsonDecode(resDetalle.body);
 
       if (dataDetalle["records"] != null && dataDetalle["records"].isNotEmpty) {
-        // Ya existe -> actualizar cantidad respetando stock
         final detalle = dataDetalle["records"][0];
         final idDetalle = detalle["id_detalle"];
+
         int nuevaCantidad = int.parse(detalle["cantidad"].toString()) + 1;
+
         if (nuevaCantidad > stockSeleccionado.cantidad) {
           nuevaCantidad = stockSeleccionado.cantidad;
         }
+
         await _ioClient.put(
           Uri.parse("$baseUrl/records/Detalle_Pedido/$idDetalle"),
           headers: {"Content-Type": "application/json"},
           body: jsonEncode({"cantidad": nuevaCantidad}),
         );
       } else {
-        // Insertar nuevo detalle
+        // INSERTAR con talla
         await _ioClient.post(
           Uri.parse("$baseUrl/records/Detalle_Pedido"),
           headers: {"Content-Type": "application/json"},
           body: jsonEncode({
             "id_pedido": idPedido,
             "id_producto": producto.id,
+            "id_talla": stockSeleccionado.idTalla,
             "cantidad": 1,
             "precio_unitario": producto.precio
           }),
@@ -106,19 +114,22 @@ class CestaService {
       print("Error creando/actualizando detalle pedido: $e");
     }
 
-    // Sincronizar carrito local
     await cargarCarritoBBDD();
   }
 
   // ======================================
   // 4. Incrementar cantidad (botón +)
   // ======================================
-  static Future<void> incrementarCantidad(int idProducto, int stockMax) async {
+  static Future<void> incrementarCantidad(int idProducto, int idTalla, int stockMax) async {
     int? idPedido = await obtenerPedidoAbierto();
     if (idPedido == null) return;
 
     final resDetalle = await _ioClient.get(Uri.parse(
-        "$baseUrl/records/Detalle_Pedido?filter=id_pedido,eq,$idPedido&filter=id_producto,eq,$idProducto"));
+        "$baseUrl/records/Detalle_Pedido?filter=id_pedido,eq,$idPedido"
+            "&filter=id_producto,eq,$idProducto"
+            "&filter=id_talla,eq,$idTalla"
+    ));
+
     final dataDetalle = jsonDecode(resDetalle.body);
     if (dataDetalle["records"] == null || dataDetalle["records"].isEmpty) return;
 
@@ -140,12 +151,16 @@ class CestaService {
   // ======================================
   // 5. Disminuir cantidad (botón -)
   // ======================================
-  static Future<void> disminuirCantidad(int idProducto) async {
+  static Future<void> disminuirCantidad(int idProducto, int idTalla) async {
     int? idPedido = await obtenerPedidoAbierto();
     if (idPedido == null) return;
 
     final resDetalle = await _ioClient.get(Uri.parse(
-        "$baseUrl/records/Detalle_Pedido?filter=id_pedido,eq,$idPedido&filter=id_producto,eq,$idProducto"));
+        "$baseUrl/records/Detalle_Pedido?filter=id_pedido,eq,$idPedido"
+            "&filter=id_producto,eq,$idProducto"
+            "&filter=id_talla,eq,$idTalla"
+    ));
+
     final dataDetalle = jsonDecode(resDetalle.body);
     if (dataDetalle["records"] == null || dataDetalle["records"].isEmpty) return;
 
@@ -154,9 +169,7 @@ class CestaService {
     int cantidadActual = int.parse(detalle["cantidad"].toString());
 
     if (cantidadActual <= 1) {
-      // Eliminar del detalle si llega a 0
-      await _ioClient.delete(
-          Uri.parse("$baseUrl/records/Detalle_Pedido/$idDetalle"));
+      await _ioClient.delete(Uri.parse("$baseUrl/records/Detalle_Pedido/$idDetalle"));
     } else {
       await _ioClient.put(
         Uri.parse("$baseUrl/records/Detalle_Pedido/$idDetalle"),
@@ -183,15 +196,35 @@ class CestaService {
     CarritoPage.carrito.clear();
 
     for (var item in data["records"]) {
+      final int idProd = int.parse(item["id_producto"].toString());
+      final int idTalla = int.parse(item["id_talla"].toString());
+
+      // Producto
+      final resProducto = await _ioClient.get(Uri.parse("$baseUrl/records/Producto/$idProd"));
+      final dataProducto = jsonDecode(resProducto.body);
+
+      // Stock real usando la lista cargada
+      final stock = CarritoPage.carritoStock.firstWhere(
+            (s) => s.idProducto == idProd && s.idTalla == idTalla,
+        orElse: () => Stock(idProducto: idProd, idTalla: idTalla, cantidad: 0),
+      );
+
+      // Talla real usando la lista cargada
+      final talla = CarritoPage.carritoTallas.firstWhere(
+            (t) => t.id == idTalla,
+        orElse: () => Talla(id: idTalla, talla: "Única"),
+      );
+
       CarritoPage.carrito.add({
-        "nombre": "Producto ${item["id_producto"]}", // puedes traer nombre real si quieres
+        "nombre": dataProducto["nombre"] ?? "Sin nombre",
         "precio": double.parse(item["precio_unitario"].toString()),
-        "talla": "N/A", // no disponible en Detalle_Pedido
-        "idProducto": int.parse(item["id_producto"].toString()),
-        "idTalla": 0,
+        "talla": talla.talla,
+        "idProducto": idProd,
+        "idTalla": idTalla,
         "cantidad": int.parse(item["cantidad"].toString()),
-        "stockMax": 99, // como no tenemos stock aquí, usamos valor grande
+        "stockMax": stock.cantidad,
       });
     }
   }
+
 }

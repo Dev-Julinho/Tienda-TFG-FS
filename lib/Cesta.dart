@@ -11,6 +11,9 @@ import 'realizarPedido.dart';
 class CarritoPage extends StatefulWidget {
   const CarritoPage({super.key});
   static List<Map<String, dynamic>> carrito = [];
+  static List<Stock> carritoStock = [];
+  static List<Talla> carritoTallas = [];
+
 
   @override
   _CarritoPageState createState() => _CarritoPageState();
@@ -33,13 +36,15 @@ class _CarritoPageState extends State<CarritoPage> {
       final resStock = await ioClient.get(Uri.parse("http://185.189.221.84/api.php/records/Stock"));
       final dataStock = jsonDecode(resStock.body);
       final List<dynamic> listaStock = dataStock["records"] ?? [];
-      stockAll = listaStock.map((e) => Stock.fromJson(e)).toList();
+      stockAll = listaStock.map((e) => Stock.fromJson(e)).toList(); // ✅ mapea cada elemento a Stock
+      CarritoPage.carritoStock = stockAll; // opcional: guardar en la clase estática
 
       // Traer tallasAll desde tu API directamente
       final resTallas = await ioClient.get(Uri.parse("http://185.189.221.84/api.php/records/Tallas"));
       final dataTallas = jsonDecode(resTallas.body);
       final List<dynamic> listaTallas = dataTallas["records"] ?? [];
-      tallasAll = listaTallas.map((e) => Talla.fromJson(e)).toList();
+      tallasAll = listaTallas.map((e) => Talla.fromJson(e)).toList(); // ✅ mapea cada elemento a Talla
+      CarritoPage.carritoTallas = tallasAll; // opcional: guardar en la clase estática
 
       // Ahora carga carrito y pasa stockAll
       await CestaService.cargarCarritoBBDD();
@@ -48,7 +53,6 @@ class _CarritoPageState extends State<CarritoPage> {
       print("Error cargando stock/tallas: $e");
     }
   }
-
 
 
   List<Map<String, dynamic>> get carrito => CarritoPage.carrito;
@@ -82,7 +86,7 @@ class _CarritoPageState extends State<CarritoPage> {
                         IconButton(
                           icon: const Icon(Icons.remove_circle, color: Colors.red),
                           onPressed: () async {
-                            await CestaService.disminuirCantidad(item["idProducto"]);
+                            await CestaService.disminuirCantidad(item["idProducto"], item["idTalla"]);
                             setState(() {}); // refresca la UI con la cantidad actualizada
                           },
                         ),
@@ -101,7 +105,11 @@ class _CarritoPageState extends State<CarritoPage> {
                           onPressed: item["cantidad"] >= item["stockMax"]
                               ? null
                               : () async {
-                            await CestaService.incrementarCantidad(item["idProducto"], item["stockMax"]);
+                            await CestaService.incrementarCantidad(
+                              item["idProducto"],
+                              item["idTalla"],
+                              item["stockMax"],
+                            );
                             setState(() {}); // refresca la UI con la cantidad actualizada
                           },
                         ),
