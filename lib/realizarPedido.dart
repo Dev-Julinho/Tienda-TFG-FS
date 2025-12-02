@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:TFGPruebas/services/cestaService.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,13 +23,12 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
   final TextEditingController direccion = TextEditingController();
   final TextEditingController codigoPostal = TextEditingController();
 
+  Map<String, dynamic>? empresaSeleccionada;
   String? metodoPago;
+  double precioEnvio = 0;
 
   List<String> metodosPago = [];
   List<Map<String, dynamic>> empresas = [];
-
-  Map<String, dynamic>? empresaSeleccionada;
-  double precioEnvio = 0;
 
   final String apiClienteUrl =
       "https://185.189.221.84/api.php/records/Cliente";
@@ -62,10 +62,8 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
     }
 
     final res = await http.get(Uri.parse("$apiClienteUrl/$idCliente"));
-
     if (res.statusCode == 200) {
       final data = jsonDecode(res.body);
-
       setState(() {
         nombre.text = data["nombre"] ?? "";
         apellidos.text = data["apellidos"] ?? "";
@@ -82,11 +80,9 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
 
   Future<void> _cargarMetodosPago() async {
     final res = await http.get(Uri.parse(apiMetodosPagoUrl));
-
     if (res.statusCode == 200) {
       final data = jsonDecode(res.body);
       final List lista = data["records"];
-
       setState(() {
         metodosPago = lista.map<String>((m) => m["tipo"].toString()).toList();
       });
@@ -95,14 +91,48 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
 
   Future<void> _cargarEmpresas() async {
     final res = await http.get(Uri.parse(apiEmpresasUrl));
-
     if (res.statusCode == 200) {
       final data = jsonDecode(res.body);
       final List lista = data["records"];
-
       setState(() {
         empresas = lista.cast<Map<String, dynamic>>();
       });
+    }
+  }
+
+  Future<void> _cerrarPedido() async {
+    try {
+      final idPedido = await CestaService.obtenerPedidoAbierto();
+      if (idPedido == null) return;
+
+      // Obtener ids correspondientes
+      int idMetodoPago = metodosPago.indexOf(metodoPago!) + 1; // ajusta según tu DB
+      int idEmpresa = empresas.indexOf(empresaSeleccionada!) + 1; // ajusta según tu DB
+
+      final response = await http.put(
+        Uri.parse("https://185.189.221.84/api.php/records/Pedido/$idPedido"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "id_estado": 2, // Cerrado
+          "id_metodo_pago": idMetodoPago,
+          "id_empresa": idEmpresa,
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        CarritoPage.carrito.clear();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Pedido realizado y cerrado con éxito")),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error cerrando pedido: ${response.statusCode}")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error cerrando pedido: $e")),
+      );
     }
   }
 
@@ -115,91 +145,61 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Realizar Pedido"),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text("Realizar Pedido"), centerTitle: true),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Datos del Usuario",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-
+            const Text("Datos del Usuario",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             CheckboxListTile(
               title: const Text("Modificar datos del usuario"),
               value: permitirEdicion,
               onChanged: (value) {
-                setState(() {
-                  permitirEdicion = value ?? false;
-                });
+                setState(() => permitirEdicion = value ?? false);
               },
             ),
-
             _campo("Nombre", nombre),
             _campo("Apellidos", apellidos),
             _campo("Teléfono", telefono, tipo: TextInputType.phone),
             _campo("Email", email, tipo: TextInputType.emailAddress),
             _campo("Dirección", direccion),
-            _campo("Código postal", codigoPostal,
-                tipo: TextInputType.number),
-
+            _campo("Código postal", codigoPostal, tipo: TextInputType.number),
             const SizedBox(height: 20),
-
-            const Text(
-              "Método de pago",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-
+            const Text("Método de pago",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             DropdownButtonFormField<String>(
               isExpanded: true,
               value: metodoPago,
               hint: const Text("Selecciona un método de pago"),
               items: metodosPago
-                  .map((m) => DropdownMenuItem(
-                value: m,
-                child: Text(m),
-              ))
+                  .map((m) => DropdownMenuItem(value: m, child: Text(m)))
                   .toList(),
-              onChanged: (value) {
-                setState(() => metodoPago = value);
-              },
+              onChanged: (value) => setState(() => metodoPago = value),
             ),
-
             const SizedBox(height: 20),
-
-            const Text(
-              "Empresa de envío",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-
+            const Text("Empresa de envío",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
-
             Column(
               children: List.generate(empresas.length, (index) {
                 final empresa = empresas[index];
                 final seleccionada = empresaSeleccionada == empresa;
 
                 double costo = 0;
-                if (index == 0) costo = 5.99;
-                if (index == 1) costo = 9.99;
+                if (index == 0) costo = 9.99;
+                if (index == 1) costo = 4.99;
                 if (index >= 2) costo = 0;
 
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 8),
                   child: ListTile(
-                    title: Text(
-                      empresa["nombre"],
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
+                    title: Text(empresa["nombre"],
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
                     subtitle: Text(empresa["descripcion"] ?? ""),
-                    trailing: Text(
-                      costo == 0 ? "Gratis" : "€$costo",
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
+                    trailing: Text(costo == 0 ? "Gratis" : "€$costo",
+                        style: const TextStyle(fontWeight: FontWeight.bold)),
                     selected: seleccionada,
                     onTap: () {
                       setState(() {
@@ -211,23 +211,17 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
                 );
               }),
             ),
-
             const SizedBox(height: 30),
-
             Text(
               "Total a pagar: €${(totalCarrito + precioEnvio).toStringAsFixed(2)}",
-              style: const TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-              ),
+              style:
+              const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
-
             const SizedBox(height: 30),
-
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed: () {
+                onPressed: () async {
                   if (metodoPago == null || empresaSeleccionada == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
@@ -236,22 +230,16 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
                     return;
                   }
 
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                        content: Text("Compra realizada con éxito")),
-                  );
+                  await _cerrarPedido();
+                  Navigator.pop(context); // volver atrás
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
-                  padding:
-                  const EdgeInsets.symmetric(vertical: 15),
+                  padding: const EdgeInsets.symmetric(vertical: 15),
                 ),
                 child: const Text(
                   "Realizar Pedido",
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.white,
-                  ),
+                  style: TextStyle(fontSize: 18, color: Colors.white),
                 ),
               ),
             ),
@@ -261,11 +249,8 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
     );
   }
 
-  Widget _campo(
-      String label,
-      TextEditingController controller, {
-        TextInputType tipo = TextInputType.text,
-      }) {
+  Widget _campo(String label, TextEditingController controller,
+      {TextInputType tipo = TextInputType.text}) {
     return Padding(
       padding: const EdgeInsets.only(top: 12),
       child: TextFormField(

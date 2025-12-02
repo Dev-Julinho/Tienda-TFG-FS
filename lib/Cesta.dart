@@ -2,7 +2,6 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as ioClient;
-import 'models/producto.dart';
 import 'services/cestaService.dart';
 import 'package:TFGPruebas/models/stock.dart';
 import 'package:TFGPruebas/models/talla.dart';
