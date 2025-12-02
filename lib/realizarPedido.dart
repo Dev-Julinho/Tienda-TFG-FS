@@ -27,8 +27,8 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
   String? metodoPago;
   double precioEnvio = 0;
 
-  List<String> metodosPago = [];
-  List<Map<String, dynamic>> empresas = [];
+  List<Map<String, dynamic>> metodosPagoList = [];
+  List<Map<String, dynamic>> empresasList = [];
 
   final String apiClienteUrl =
       "https://185.189.221.84/api.php/records/Cliente";
@@ -84,7 +84,11 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
       final data = jsonDecode(res.body);
       final List lista = data["records"];
       setState(() {
-        metodosPago = lista.map<String>((m) => m["tipo"].toString()).toList();
+        // Guardamos id y tipo juntos
+        metodosPagoList = lista.map<Map<String, dynamic>>((m) => {
+          "id": m["id_metodo_pago"],
+          "tipo": m["tipo"],
+        }).toList();
       });
     }
   }
@@ -95,7 +99,11 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
       final data = jsonDecode(res.body);
       final List lista = data["records"];
       setState(() {
-        empresas = lista.cast<Map<String, dynamic>>();
+        empresasList = lista.map<Map<String, dynamic>>((e) => {
+          "id": e["id_empresa"],
+          "nombre": e["nombre"],
+          "descripcion": e["descripcion"],
+        }).toList();
       });
     }
   }
@@ -105,9 +113,17 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
       final idPedido = await CestaService.obtenerPedidoAbierto();
       if (idPedido == null) return;
 
-      // Obtener ids correspondientes
-      int idMetodoPago = metodosPago.indexOf(metodoPago!) + 1; // ajusta según tu DB
-      int idEmpresa = empresas.indexOf(empresaSeleccionada!) + 1; // ajusta según tu DB
+      // Obtener ID real del método de pago
+      final idMetodoPago = metodosPagoList.firstWhere(
+            (m) => m["tipo"] == metodoPago,
+        orElse: () => {"id": 0},
+      )["id"];
+
+      // Obtener ID real de la empresa
+      final idEmpresa = empresasList.firstWhere(
+            (e) => e["nombre"] == empresaSeleccionada!["nombre"],
+        orElse: () => {"id": 0},
+      )["id"];
 
       final response = await http.put(
         Uri.parse("https://185.189.221.84/api.php/records/Pedido/$idPedido"),
@@ -156,9 +172,7 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
             CheckboxListTile(
               title: const Text("Modificar datos del usuario"),
               value: permitirEdicion,
-              onChanged: (value) {
-                setState(() => permitirEdicion = value ?? false);
-              },
+              onChanged: (value) => setState(() => permitirEdicion = value ?? false),
             ),
             _campo("Nombre", nombre),
             _campo("Apellidos", apellidos),
@@ -173,8 +187,11 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
               isExpanded: true,
               value: metodoPago,
               hint: const Text("Selecciona un método de pago"),
-              items: metodosPago
-                  .map((m) => DropdownMenuItem(value: m, child: Text(m)))
+              items: metodosPagoList
+                  .map((m) => DropdownMenuItem<String>(
+                value: m["tipo"].toString(),
+                child: Text(m["tipo"].toString()),
+              ))
                   .toList(),
               onChanged: (value) => setState(() => metodoPago = value),
             ),
@@ -183,14 +200,13 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             const SizedBox(height: 10),
             Column(
-              children: List.generate(empresas.length, (index) {
-                final empresa = empresas[index];
+              children: List.generate(empresasList.length, (index) {
+                final empresa = empresasList[index];
                 final seleccionada = empresaSeleccionada == empresa;
 
                 double costo = 0;
                 if (index == 0) costo = 9.99;
                 if (index == 1) costo = 4.99;
-                if (index >= 2) costo = 0;
 
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 8),
@@ -214,8 +230,7 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
             const SizedBox(height: 30),
             Text(
               "Total a pagar: €${(totalCarrito + precioEnvio).toStringAsFixed(2)}",
-              style:
-              const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 30),
             SizedBox(
@@ -224,8 +239,7 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
                 onPressed: () async {
                   if (metodoPago == null || empresaSeleccionada == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                          content: Text("Completa todos los campos")),
+                      const SnackBar(content: Text("Completa todos los campos")),
                     );
                     return;
                   }
