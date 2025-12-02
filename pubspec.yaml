@@ -30,9 +30,3 @@ flutter:
   assets:
 #    - assets/logo.png
 
-flutter_native_splash:
-  color: "#000000"
-  android: true
-  ios: true
-  android_gravity: centerCrop
-  ios_content_mode: scaleAspectFit

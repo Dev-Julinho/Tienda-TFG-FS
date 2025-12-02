@@ -15,22 +15,27 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
   bool permitirEdicion = false;
   bool cargando = true;
 
-  TextEditingController nombre = TextEditingController();
-  TextEditingController apellidos = TextEditingController();
-  TextEditingController telefono = TextEditingController();
-  TextEditingController email = TextEditingController();
-  TextEditingController direccion = TextEditingController();
-  TextEditingController codigoPostal = TextEditingController();
+  final TextEditingController nombre = TextEditingController();
+  final TextEditingController apellidos = TextEditingController();
+  final TextEditingController telefono = TextEditingController();
+  final TextEditingController email = TextEditingController();
+  final TextEditingController direccion = TextEditingController();
+  final TextEditingController codigoPostal = TextEditingController();
 
   String? metodoPago;
-  String? empresaSeleccionada;
 
   List<String> metodosPago = [];
-  List<String> empresas = [];
+  List<Map<String, dynamic>> empresas = [];
 
-  final String apiClienteUrl = "https://185.189.221.84/api.php/records/Cliente";
-  final String apiMetodosPagoUrl = "https://185.189.221.84/api.php/records/Metodo_Pago";
-  final String apiEmpresasUrl = "https://185.189.221.84/api.php/records/Empresa";
+  Map<String, dynamic>? empresaSeleccionada;
+  double precioEnvio = 0;
+
+  final String apiClienteUrl =
+      "https://185.189.221.84/api.php/records/Cliente";
+  final String apiMetodosPagoUrl =
+      "https://185.189.221.84/api.php/records/Metodo_Pago";
+  final String apiEmpresasUrl =
+      "https://185.189.221.84/api.php/records/Empresa";
 
   double get totalCarrito {
     return CarritoPage.carrito.fold(
@@ -52,9 +57,7 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
     int? idCliente = prefs.getInt("id_cliente");
 
     if (idCliente == null) {
-      setState(() {
-        cargando = false;
-      });
+      setState(() => cargando = false);
       return;
     }
 
@@ -62,6 +65,7 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
 
     if (res.statusCode == 200) {
       final data = jsonDecode(res.body);
+
       setState(() {
         nombre.text = data["nombre"] ?? "";
         apellidos.text = data["apellidos"] ?? "";
@@ -72,46 +76,33 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
         cargando = false;
       });
     } else {
-      setState(() {
-        cargando = false;
-      });
+      setState(() => cargando = false);
     }
   }
 
   Future<void> _cargarMetodosPago() async {
-    try {
-      final res = await http.get(Uri.parse(apiMetodosPagoUrl));
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        print("Métodos de pago: ${data['records']}"); // debug
-        setState(() {
-          metodosPago = List<String>.from(
-              data["records"].map((m) => m["nombre_metodo"] ?? "")
-          );
-        });
-      } else {
-        print("Error al cargar métodos de pago: ${res.statusCode}");
-      }
-    } catch (e) {
-      print("Error cargando métodos de pago: $e");
+    final res = await http.get(Uri.parse(apiMetodosPagoUrl));
+
+    if (res.statusCode == 200) {
+      final data = jsonDecode(res.body);
+      final List lista = data["records"];
+
+      setState(() {
+        metodosPago = lista.map<String>((m) => m["tipo"].toString()).toList();
+      });
     }
   }
 
   Future<void> _cargarEmpresas() async {
-    try {
-      final res = await http.get(Uri.parse(apiEmpresasUrl));
-      if (res.statusCode == 200) {
-        final data = jsonDecode(res.body);
-        setState(() {
-          empresas = List<String>.from(
-              data["records"].map((e) => "${e["nombre"]} (${e["descripcion"] ?? ""})")
-          );
-        });
-      } else {
-        print("Error al cargar empresas: ${res.statusCode}");
-      }
-    } catch (e) {
-      print("Error cargando empresas: $e");
+    final res = await http.get(Uri.parse(apiEmpresasUrl));
+
+    if (res.statusCode == 200) {
+      final data = jsonDecode(res.body);
+      final List lista = data["records"];
+
+      setState(() {
+        empresas = lista.cast<Map<String, dynamic>>();
+      });
     }
   }
 
@@ -119,9 +110,7 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
   Widget build(BuildContext context) {
     if (cargando) {
       return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
+        body: Center(child: CircularProgressIndicator()),
       );
     }
 
@@ -141,11 +130,11 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
             ),
 
             CheckboxListTile(
-              title: const Text("Modificar datos del usuario para el pedido"),
+              title: const Text("Modificar datos del usuario"),
               value: permitirEdicion,
               onChanged: (value) {
                 setState(() {
-                  permitirEdicion = value!;
+                  permitirEdicion = value ?? false;
                 });
               },
             ),
@@ -155,7 +144,8 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
             _campo("Teléfono", telefono, tipo: TextInputType.phone),
             _campo("Email", email, tipo: TextInputType.emailAddress),
             _campo("Dirección", direccion),
-            _campo("Código postal", codigoPostal, tipo: TextInputType.number),
+            _campo("Código postal", codigoPostal,
+                tipo: TextInputType.number),
 
             const SizedBox(height: 20),
 
@@ -163,51 +153,73 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
               "Método de pago",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 10),
 
             DropdownButtonFormField<String>(
-              value: metodoPago != null && metodosPago.contains(metodoPago) ? metodoPago : null,
-              hint: const Text("Selecciona un Método de Pago"),
+              isExpanded: true,
+              value: metodoPago,
+              hint: const Text("Selecciona un método de pago"),
               items: metodosPago
-                  .where((m) => m.isNotEmpty)
-                  .toSet()
-                  .map((m) => DropdownMenuItem(value: m, child: Text(m)))
+                  .map((m) => DropdownMenuItem(
+                value: m,
+                child: Text(m),
+              ))
                   .toList(),
               onChanged: (value) {
-                setState(() {
-                  metodoPago = value;
-                });
+                setState(() => metodoPago = value);
               },
             ),
 
             const SizedBox(height: 20),
 
             const Text(
-              "Empresa de Envío",
+              "Empresa de envío",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
+
             const SizedBox(height: 10),
 
-            DropdownButtonFormField<String>(
-              value: empresaSeleccionada != null && empresas.contains(empresaSeleccionada) ? empresaSeleccionada : null,
-              hint: const Text("Selecciona una Empresa de Envío"),
-              items: empresas
-                  .where((e) => e.isNotEmpty)
-                  .toSet()
-                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
-                  .toList(),
-              onChanged: (value) {
-                setState(() {
-                  empresaSeleccionada = value;
-                });
-              },
+            Column(
+              children: List.generate(empresas.length, (index) {
+                final empresa = empresas[index];
+                final seleccionada = empresaSeleccionada == empresa;
+
+                double costo = 0;
+                if (index == 0) costo = 5.99;
+                if (index == 1) costo = 9.99;
+                if (index >= 2) costo = 0;
+
+                return Card(
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  child: ListTile(
+                    title: Text(
+                      empresa["nombre"],
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(empresa["descripcion"] ?? ""),
+                    trailing: Text(
+                      costo == 0 ? "Gratis" : "€$costo",
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    selected: seleccionada,
+                    onTap: () {
+                      setState(() {
+                        empresaSeleccionada = empresa;
+                        precioEnvio = costo;
+                      });
+                    },
+                  ),
+                );
+              }),
             ),
 
             const SizedBox(height: 30),
 
             Text(
-              "Total a pagar: €${totalCarrito.toStringAsFixed(2)}",
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              "Total a pagar: €${(totalCarrito + precioEnvio).toStringAsFixed(2)}",
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+              ),
             ),
 
             const SizedBox(height: 30),
@@ -215,21 +227,31 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  padding: const EdgeInsets.symmetric(vertical: 15),
-                ),
                 onPressed: () {
+                  if (metodoPago == null || empresaSeleccionada == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                          content: Text("Completa todos los campos")),
+                    );
+                    return;
+                  }
+
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text("Compra realizada con éxito"),
-                      duration: Duration(seconds: 2),
-                    ),
+                        content: Text("Compra realizada con éxito")),
                   );
                 },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  padding:
+                  const EdgeInsets.symmetric(vertical: 15),
+                ),
                 child: const Text(
                   "Realizar Pedido",
-                  style: TextStyle(fontSize: 18, color: Colors.white),
+                  style: TextStyle(
+                    fontSize: 18,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),

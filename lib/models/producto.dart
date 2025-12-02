@@ -15,11 +15,11 @@ class Producto {
 
   factory Producto.fromJson(Map<String, dynamic> json) {
     return Producto(
-      id: json["id_producto"],
-      nombre: json["nombre"],
+      id: int.parse(json["id_producto"].toString()),
+      nombre: json["nombre"] ?? "Sin nombre",
       descripcion: json["descripcion"] ?? "",
       precio: double.tryParse(json["precio"].toString()) ?? 0,
-      idCategoria: json["id_categoria"],
+      idCategoria: int.parse(json["id_categoria"].toString()),
     );
   }
 }

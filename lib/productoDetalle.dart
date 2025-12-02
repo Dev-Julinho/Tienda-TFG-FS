@@ -1,10 +1,10 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as ioClient;
-import 'Cesta.dart';
 import 'models/producto.dart';
 import 'models/stock.dart';
 import 'models/talla.dart';
+import 'services/cestaService.dart';
 
 class ProductoDetalle extends StatefulWidget {
   final Producto producto;
@@ -31,14 +31,16 @@ class _ProductoDetalleState extends State<ProductoDetalle> {
     try {
       // Traer todas las tallas
       final resTallas = await ioClient.get(
-          Uri.parse("http://185.189.221.84/api.php/records/Tallas"));
+        Uri.parse("http://185.189.221.84/api.php/records/Tallas"),
+      );
       final dataTallas = jsonDecode(resTallas.body);
       final List<dynamic> listaTallas = dataTallas["records"] ?? [];
       todasTallas = listaTallas.map((e) => Talla.fromJson(e)).toList();
 
       // Traer todo el stock
-      final resStock = await ioClient
-          .get(Uri.parse("http://185.189.221.84/api.php/records/Stock"));
+      final resStock = await ioClient.get(
+        Uri.parse("http://185.189.221.84/api.php/records/Stock"),
+      );
       final dataStock = jsonDecode(resStock.body);
       final List<dynamic> listaStock = dataStock["records"] ?? [];
       List<Stock> allStock = listaStock.map((e) => Stock.fromJson(e)).toList();
@@ -103,7 +105,7 @@ class _ProductoDetalleState extends State<ProductoDetalle> {
                           fontWeight: FontWeight.w600)),
                   const SizedBox(height: 20),
 
-                  // Dropdown de tallas encima de la descripción
+                  // Dropdown de tallas
                   if (stockProducto.isNotEmpty) ...[
                     const Text("Selecciona talla:",
                         style: TextStyle(
@@ -116,7 +118,8 @@ class _ProductoDetalleState extends State<ProductoDetalle> {
                       items: stockProducto.map((s) {
                         final talla = todasTallas.firstWhere(
                               (t) => t.id.toString() == s.idTalla.toString(),
-                          orElse: () => Talla(id: s.idTalla, talla: "Desconocida"),
+                          orElse: () =>
+                              Talla(id: s.idTalla, talla: "Desconocida"),
                         );
                         return DropdownMenuItem<String>(
                           value: s.idTalla.toString(),
@@ -156,34 +159,22 @@ class _ProductoDetalleState extends State<ProductoDetalle> {
                     textStyle: const TextStyle(fontSize: 20)),
                 onPressed: selectedTallaId == null
                     ? null
-                    : () {
-                  final tallaSeleccionada = todasTallas.firstWhere(
-                        (t) => t.id.toString() == selectedTallaId,
-                    orElse: () =>
-                        Talla(id: int.parse(selectedTallaId!), talla: "Desconocida"),
-                  );
-
+                    : () async {
                   final stockSeleccionado = stockProducto.firstWhere(
-                        (s) => s.idTalla.toString() == selectedTallaId,
-                    orElse: () => Stock(
-                        idProducto: widget.producto.id,
-                        idTalla: int.parse(selectedTallaId!),
-                        cantidad: 0),
+                          (s) => s.idTalla.toString() == selectedTallaId);
+
+                  // Agregar producto al pedido y carrito
+                  await CestaService.agregarProducto(
+                    producto: widget.producto,
+                    stockSeleccionado: stockSeleccionado,
                   );
 
-                  // Añadir al carrito con stockMax
-                  CarritoPage.carrito.add({
-                    "nombre": widget.producto.nombre,
-                    "precio": widget.producto.precio,
-                    "talla": tallaSeleccionada.talla,
-                    "idProducto": widget.producto.id,
-                    "idTalla": stockSeleccionado.idTalla,
-                    "cantidad": 1,
-                    "stockMax": stockSeleccionado.cantidad,
-                  });
+                  setState(() {});
 
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text("Producto añadido al carrito correctamente")),
+                    const SnackBar(
+                      content: Text("Producto añadido al carrito correctamente"),
+                    ),
                   );
                 },
                 child: const Text("Añadir al Carrito"),
