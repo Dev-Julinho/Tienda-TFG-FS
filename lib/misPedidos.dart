@@ -5,7 +5,7 @@ import 'package:http/io_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'detallePedido.dart';
 import 'models/pedido.dart';
-
+import 'services/cestaService.dart';
 
 class MisPedidosPage extends StatefulWidget {
   const MisPedidosPage({super.key});
@@ -33,6 +33,20 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
     ioClient = IOClient(httpClient);
 
     _obtenerPedidosCerrados();
+  }
+
+  Future<void> _obtenerPrimerProducto(Pedido pedido) async {
+    try {
+      final productos = await CestaService.obtenerProductosPedido(pedido.idPedido);
+      if (productos.isNotEmpty) {
+        setState(() {
+          pedido.primerProductoNombre = productos[0]["nombre"] ?? "Producto";
+          pedido.primerProductoImagen = productos[0]["imagen"] ?? null;
+        });
+      }
+    } catch (e) {
+      // ignoramos errores aquí, solo no ponemos nombre/imagen
+    }
   }
 
   Future<void> _obtenerPedidosCerrados() async {
@@ -76,6 +90,11 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
         pedidos = nuevas;
         cargando = false;
       });
+
+      // Ahora obtenemos el primer producto de cada pedido
+      for (var pedido in pedidos) {
+        _obtenerPrimerProducto(pedido);
+      }
     } catch (e) {
       setState(() {
         cargando = false;
@@ -153,8 +172,16 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
               elevation: 3,
               child: ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                leading: pedido.primerProductoImagen != null
+                    ? Image.network(
+                  pedido.primerProductoImagen!,
+                  width: 50,
+                  height: 50,
+                  fit: BoxFit.cover,
+                )
+                    : const Icon(Icons.receipt_long, size: 40),
                 title: Text(
-                  "Pedido #${pedido.idPedido}",
+                  pedido.primerProductoNombre ?? "Pedido #${pedido.idPedido}",
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 subtitle: Text(
