@@ -23,8 +23,14 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
   TextEditingController codigoPostal = TextEditingController();
 
   String? metodoPago;
+  String? empresaSeleccionada;
 
-  final String apiUrl = "https://185.189.221.84/api.php/records/Cliente";
+  List<String> metodosPago = [];
+  List<String> empresas = [];
+
+  final String apiClienteUrl = "https://185.189.221.84/api.php/records/Cliente";
+  final String apiMetodosPagoUrl = "https://185.189.221.84/api.php/records/Metodo_Pago";
+  final String apiEmpresasUrl = "https://185.189.221.84/api.php/records/Empresa";
 
   double get totalCarrito {
     return CarritoPage.carrito.fold(
@@ -37,6 +43,8 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
   void initState() {
     super.initState();
     _cargarDatosUsuario();
+    _cargarMetodosPago();
+    _cargarEmpresas();
   }
 
   Future<void> _cargarDatosUsuario() async {
@@ -50,11 +58,10 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
       return;
     }
 
-    final res = await http.get(Uri.parse("$apiUrl/$idCliente"));
+    final res = await http.get(Uri.parse("$apiClienteUrl/$idCliente"));
 
     if (res.statusCode == 200) {
       final data = jsonDecode(res.body);
-
       setState(() {
         nombre.text = data["nombre"] ?? "";
         apellidos.text = data["apellidos"] ?? "";
@@ -68,6 +75,43 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
       setState(() {
         cargando = false;
       });
+    }
+  }
+
+  Future<void> _cargarMetodosPago() async {
+    try {
+      final res = await http.get(Uri.parse(apiMetodosPagoUrl));
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        print("Métodos de pago: ${data['records']}"); // debug
+        setState(() {
+          metodosPago = List<String>.from(
+              data["records"].map((m) => m["nombre_metodo"] ?? "")
+          );
+        });
+      } else {
+        print("Error al cargar métodos de pago: ${res.statusCode}");
+      }
+    } catch (e) {
+      print("Error cargando métodos de pago: $e");
+    }
+  }
+
+  Future<void> _cargarEmpresas() async {
+    try {
+      final res = await http.get(Uri.parse(apiEmpresasUrl));
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        setState(() {
+          empresas = List<String>.from(
+              data["records"].map((e) => "${e["nombre"]} (${e["descripcion"] ?? ""})")
+          );
+        });
+      } else {
+        print("Error al cargar empresas: ${res.statusCode}");
+      }
+    } catch (e) {
+      print("Error cargando empresas: $e");
     }
   }
 
@@ -119,29 +163,42 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
               "Método de pago",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
-
             const SizedBox(height: 10),
 
-            DropdownButtonFormField(
-              value: metodoPago,
-              hint: const Text("Selecciona un método de pago"),
-              items: const [
-                DropdownMenuItem(
-                  value: "Tarjeta de crédito/débito",
-                  child: Text("Tarjeta de crédito/débito"),
-                ),
-                DropdownMenuItem(
-                  value: "PayPal",
-                  child: Text("PayPal"),
-                ),
-                DropdownMenuItem(
-                  value: "Pago contra reembolso",
-                  child: Text("Pago contra reembolso"),
-                ),
-              ],
+            DropdownButtonFormField<String>(
+              value: metodoPago != null && metodosPago.contains(metodoPago) ? metodoPago : null,
+              hint: const Text("Selecciona un Método de Pago"),
+              items: metodosPago
+                  .where((m) => m.isNotEmpty)
+                  .toSet()
+                  .map((m) => DropdownMenuItem(value: m, child: Text(m)))
+                  .toList(),
               onChanged: (value) {
                 setState(() {
-                  metodoPago = value!;
+                  metodoPago = value;
+                });
+              },
+            ),
+
+            const SizedBox(height: 20),
+
+            const Text(
+              "Empresa de Envío",
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 10),
+
+            DropdownButtonFormField<String>(
+              value: empresaSeleccionada != null && empresas.contains(empresaSeleccionada) ? empresaSeleccionada : null,
+              hint: const Text("Selecciona una Empresa de Envío"),
+              items: empresas
+                  .where((e) => e.isNotEmpty)
+                  .toSet()
+                  .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                  .toList(),
+              onChanged: (value) {
+                setState(() {
+                  empresaSeleccionada = value;
                 });
               },
             ),
