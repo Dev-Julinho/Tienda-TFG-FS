@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:http/io_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'login.dart';
+import 'misPedidos.dart';
 
 class MiCuentaPage extends StatefulWidget {
   const MiCuentaPage({super.key});
@@ -153,6 +154,64 @@ class _MiCuentaPageState extends State<MiCuentaPage> {
                         )
                       ],
                     )
+                  ],
+                ),
+              ),
+            ),
+
+            // ----- TARJETA MIS PEDIDOS -----
+            const SizedBox(height: 25),
+
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => const MisPedidosPage(),
+                  ),
+                );
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 18),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      Colors.deepPurple.shade400,
+                      Colors.deepPurple.shade700
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.15),
+                      blurRadius: 6,
+                      offset: const Offset(0, 4),
+                    )
+                  ],
+                ),
+                child: Row(
+                  children: const [
+                    Icon(
+                      Icons.receipt_long,
+                      color: Colors.white,
+                      size: 30,
+                    ),
+                    SizedBox(width: 15),
+                    Expanded(
+                      child: Text(
+                        "Mis pedidos",
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_forward_ios,
+                      color: Colors.white,
+                      size: 18,
+                    ),
                   ],
                 ),
               ),
