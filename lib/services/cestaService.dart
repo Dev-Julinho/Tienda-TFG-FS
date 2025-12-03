@@ -11,13 +11,14 @@ import '../models/talla.dart';
 class CestaService {
   static const String baseUrl = "https://185.189.221.84/api.php";
 
-  // Cliente HTTP que ignora certificados inválidos (solo pruebas)
+  // Cliente HTTP que ignora certificados inválidos
   static final HttpClient _httpClient = HttpClient()
     ..badCertificateCallback =
         (X509Certificate cert, String host, int port) => true;
 
   static final IOClient _ioClient = IOClient(_httpClient);
 
+  // Obtener id_cliente almacenado en SharedPreferences
   static Future<int?> getIdCliente() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getInt("id_cliente");
@@ -76,7 +77,29 @@ class CestaService {
   }
 
   // ======================================
-  // 3. Agregar producto al pedido
+  // 3. ELIMINAR PEDIDO SI NO TIENE PRODUCTOS
+  // ======================================
+  static Future<void> eliminarPedidoSiVacio(int idPedido) async {
+    try {
+      final res = await _ioClient.get(Uri.parse(
+          "$baseUrl/records/Detalle_Pedido?filter=id_pedido,eq,$idPedido"));
+
+      final data = jsonDecode(res.body);
+
+      if (data["records"] == null || data["records"].isEmpty) {
+        print("🗑 Eliminando pedido vacío: $idPedido");
+
+        await _ioClient.delete(
+          Uri.parse("$baseUrl/records/Pedido/$idPedido"),
+        );
+      }
+    } catch (e) {
+      print("Error eliminando pedido vacío: $e");
+    }
+  }
+
+  // ======================================
+  // 4. Agregar producto al pedido
   // ======================================
   static Future<void> agregarProducto({
     required Producto producto,
@@ -132,7 +155,7 @@ class CestaService {
   }
 
   // ======================================
-  // 4. Incrementar cantidad (botón +)
+  // 5. Incrementar cantidad (botón +)
   // ======================================
   static Future<void> incrementarCantidad(
       int idProducto, int idTalla, int stockMax) async {
@@ -165,7 +188,7 @@ class CestaService {
   }
 
   // ======================================
-  // 5. Disminuir cantidad (botón -)
+  // 6. Disminuir cantidad (botón -)
   // ======================================
   static Future<void> disminuirCantidad(
       int idProducto, int idTalla) async {
@@ -199,10 +222,13 @@ class CestaService {
     }
 
     await cargarCarritoBBDD();
+
+    // 🔥 NUEVO: eliminar pedido si ya no quedan productos
+    await eliminarPedidoSiVacio(idPedido);
   }
 
   // ======================================
-  // 6. Cargar carrito desde BBDD
+  // 7. Cargar carrito desde BBDD
   // ======================================
   static Future<void> cargarCarritoBBDD() async {
     int? idPedido = await obtenerPedidoAbierto();
@@ -249,7 +275,7 @@ class CestaService {
   }
 
   // ======================================
-  // 7. Obtener productos de un pedido
+  // 8. Obtener productos de un pedido
   // ======================================
   static Future<List<Map<String, dynamic>>> obtenerProductosPedido(
       int idPedido) async {
@@ -299,5 +325,38 @@ class CestaService {
       print("Error obteniendo productos del pedido $idPedido: $e");
     }
     return [];
+  }
+
+  // ======================================
+  // 9. Eliminar todos los productos del carrito a la vezs
+  // ======================================
+  static Future<void> eliminarTodosLosProductos() async {
+    int? idPedido = await obtenerPedidoAbierto();
+    if (idPedido == null) return;
+
+    try {
+      // 1. Borrar todos los detalles del pedido
+      final resDetalles = await _ioClient.get(Uri.parse(
+          "$baseUrl/records/Detalle_Pedido?filter=id_pedido,eq,$idPedido"));
+
+      final data = jsonDecode(resDetalles.body);
+
+      if (data["records"] != null) {
+        for (var item in data["records"]) {
+          final idDetalle = item["id_detalle"];
+          await _ioClient
+              .delete(Uri.parse("$baseUrl/records/Detalle_Pedido/$idDetalle"));
+        }
+      }
+
+      // 2. Borrar el pedido si ya no tiene productos
+      await _ioClient.delete(Uri.parse("$baseUrl/records/Pedido/$idPedido"));
+
+      // 3. Vaciar el carrito local
+      CarritoPage.carrito.clear();
+
+    } catch (e) {
+      print("Error eliminando todo el carrito: $e");
+    }
   }
 }
