@@ -1,6 +1,8 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/io_client.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../models/producto.dart';
 import '../models/stock.dart';
 import '../Cesta.dart';
@@ -11,20 +13,29 @@ class CestaService {
 
   // Cliente HTTP que ignora certificados inválidos (solo pruebas)
   static final HttpClient _httpClient = HttpClient()
-    ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+    ..badCertificateCallback =
+        (X509Certificate cert, String host, int port) => true;
+
   static final IOClient _ioClient = IOClient(_httpClient);
 
-  // Usuario
-  static int get idCliente => 1;
+  static Future<int?> getIdCliente() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getInt("id_cliente");
+  }
 
   // ======================================
   // 1. Obtener pedido abierto
   // ======================================
   static Future<int?> obtenerPedidoAbierto() async {
     try {
+      int? idCliente = await getIdCliente();
+      if (idCliente == null) return null;
+
       final res = await _ioClient.get(Uri.parse(
           "$baseUrl/records/Pedido?filter=id_cliente,eq,$idCliente&filter=id_estado,eq,1"));
+
       final data = jsonDecode(res.body);
+
       if (data["records"] != null && data["records"].isNotEmpty) {
         return int.parse(data["records"][0]["id_pedido"].toString());
       }
@@ -39,6 +50,9 @@ class CestaService {
   // ======================================
   static Future<int?> crearPedido() async {
     try {
+      int? idCliente = await getIdCliente();
+      if (idCliente == null) return null;
+
       final response = await _ioClient.post(
         Uri.parse("$baseUrl/records/Pedido"),
         headers: {"Content-Type": "application/json"},
@@ -48,6 +62,7 @@ class CestaService {
           "fecha_pedido": DateTime.now().toIso8601String()
         }),
       );
+
       if (response.statusCode == 200 || response.statusCode == 201) {
         final id = int.tryParse(response.body.trim());
         return id;
@@ -72,20 +87,20 @@ class CestaService {
     if (idPedido == null) return;
 
     try {
-      // ⚠️ OJO: ahora también filtramos por id_talla
       final resDetalle = await _ioClient.get(Uri.parse(
           "$baseUrl/records/Detalle_Pedido?filter=id_pedido,eq,$idPedido"
               "&filter=id_producto,eq,${producto.id}"
-              "&filter=id_talla,eq,${stockSeleccionado.idTalla}"
-      ));
+              "&filter=id_talla,eq,${stockSeleccionado.idTalla}"));
 
       final dataDetalle = jsonDecode(resDetalle.body);
 
-      if (dataDetalle["records"] != null && dataDetalle["records"].isNotEmpty) {
+      if (dataDetalle["records"] != null &&
+          dataDetalle["records"].isNotEmpty) {
         final detalle = dataDetalle["records"][0];
         final idDetalle = detalle["id_detalle"];
 
-        int nuevaCantidad = int.parse(detalle["cantidad"].toString()) + 1;
+        int nuevaCantidad =
+            int.parse(detalle["cantidad"].toString()) + 1;
 
         if (nuevaCantidad > stockSeleccionado.cantidad) {
           nuevaCantidad = stockSeleccionado.cantidad;
@@ -97,7 +112,6 @@ class CestaService {
           body: jsonEncode({"cantidad": nuevaCantidad}),
         );
       } else {
-        // INSERTAR con talla
         await _ioClient.post(
           Uri.parse("$baseUrl/records/Detalle_Pedido"),
           headers: {"Content-Type": "application/json"},
@@ -120,23 +134,25 @@ class CestaService {
   // ======================================
   // 4. Incrementar cantidad (botón +)
   // ======================================
-  static Future<void> incrementarCantidad(int idProducto, int idTalla, int stockMax) async {
+  static Future<void> incrementarCantidad(
+      int idProducto, int idTalla, int stockMax) async {
     int? idPedido = await obtenerPedidoAbierto();
     if (idPedido == null) return;
 
     final resDetalle = await _ioClient.get(Uri.parse(
         "$baseUrl/records/Detalle_Pedido?filter=id_pedido,eq,$idPedido"
             "&filter=id_producto,eq,$idProducto"
-            "&filter=id_talla,eq,$idTalla"
-    ));
+            "&filter=id_talla,eq,$idTalla"));
 
     final dataDetalle = jsonDecode(resDetalle.body);
-    if (dataDetalle["records"] == null || dataDetalle["records"].isEmpty) return;
+
+    if (dataDetalle["records"] == null ||
+        dataDetalle["records"].isEmpty) return;
 
     final detalle = dataDetalle["records"][0];
     final idDetalle = detalle["id_detalle"];
-    int cantidadActual = int.parse(detalle["cantidad"].toString());
 
+    int cantidadActual = int.parse(detalle["cantidad"].toString());
     if (cantidadActual >= stockMax) return;
 
     await _ioClient.put(
@@ -151,25 +167,29 @@ class CestaService {
   // ======================================
   // 5. Disminuir cantidad (botón -)
   // ======================================
-  static Future<void> disminuirCantidad(int idProducto, int idTalla) async {
+  static Future<void> disminuirCantidad(
+      int idProducto, int idTalla) async {
     int? idPedido = await obtenerPedidoAbierto();
     if (idPedido == null) return;
 
     final resDetalle = await _ioClient.get(Uri.parse(
         "$baseUrl/records/Detalle_Pedido?filter=id_pedido,eq,$idPedido"
             "&filter=id_producto,eq,$idProducto"
-            "&filter=id_talla,eq,$idTalla"
-    ));
+            "&filter=id_talla,eq,$idTalla"));
 
     final dataDetalle = jsonDecode(resDetalle.body);
-    if (dataDetalle["records"] == null || dataDetalle["records"].isEmpty) return;
+
+    if (dataDetalle["records"] == null ||
+        dataDetalle["records"].isEmpty) return;
 
     final detalle = dataDetalle["records"][0];
     final idDetalle = detalle["id_detalle"];
+
     int cantidadActual = int.parse(detalle["cantidad"].toString());
 
     if (cantidadActual <= 1) {
-      await _ioClient.delete(Uri.parse("$baseUrl/records/Detalle_Pedido/$idDetalle"));
+      await _ioClient
+          .delete(Uri.parse("$baseUrl/records/Detalle_Pedido/$idDetalle"));
     } else {
       await _ioClient.put(
         Uri.parse("$baseUrl/records/Detalle_Pedido/$idDetalle"),
@@ -188,9 +208,11 @@ class CestaService {
     int? idPedido = await obtenerPedidoAbierto();
     if (idPedido == null) return;
 
-    final res = await _ioClient.get(
-        Uri.parse("$baseUrl/records/Detalle_Pedido?filter=id_pedido,eq,$idPedido"));
+    final res = await _ioClient.get(Uri.parse(
+        "$baseUrl/records/Detalle_Pedido?filter=id_pedido,eq,$idPedido"));
+
     final data = jsonDecode(res.body);
+
     if (data["records"] == null) return;
 
     CarritoPage.carrito.clear();
@@ -199,17 +221,16 @@ class CestaService {
       final int idProd = int.parse(item["id_producto"].toString());
       final int idTalla = int.parse(item["id_talla"].toString());
 
-      // Producto
-      final resProducto = await _ioClient.get(Uri.parse("$baseUrl/records/Producto/$idProd"));
+      final resProducto =
+      await _ioClient.get(Uri.parse("$baseUrl/records/Producto/$idProd"));
+
       final dataProducto = jsonDecode(resProducto.body);
 
-      // Stock real usando la lista cargada
       final stock = CarritoPage.carritoStock.firstWhere(
             (s) => s.idProducto == idProd && s.idTalla == idTalla,
         orElse: () => Stock(idProducto: idProd, idTalla: idTalla, cantidad: 0),
       );
 
-      // Talla real usando la lista cargada
       final talla = CarritoPage.carritoTallas.firstWhere(
             (t) => t.id == idTalla,
         orElse: () => Talla(id: idTalla, talla: "Única"),
@@ -227,31 +248,39 @@ class CestaService {
     }
   }
 
-  static Future<List<Map<String, dynamic>>> obtenerProductosPedido(int idPedido) async {
+  // ======================================
+  // 7. Obtener productos de un pedido
+  // ======================================
+  static Future<List<Map<String, dynamic>>> obtenerProductosPedido(
+      int idPedido) async {
     try {
-      final res = await _ioClient.get(
-          Uri.parse("$baseUrl/records/Detalle_Pedido?filter=id_pedido,eq,$idPedido")
-      );
+      final res = await _ioClient.get(Uri.parse(
+          "$baseUrl/records/Detalle_Pedido?filter=id_pedido,eq,$idPedido"));
 
       final data = jsonDecode(res.body);
+
       if (data["records"] != null) {
         List<Map<String, dynamic>> productos = [];
 
         for (var item in data["records"]) {
-          final idProd = int.parse(item["id_producto"].toString());
-          final idTalla = int.tryParse(item["id_talla"]?.toString() ?? "");
+          final int idProd = int.parse(item["id_producto"].toString());
+          final int? idTalla =
+          int.tryParse(item["id_talla"]?.toString() ?? "");
+
           String talla = "Única";
 
           if (idTalla != null) {
-            final resTalla = await _ioClient.get(Uri.parse("$baseUrl/records/Tallas/$idTalla"));
+            final resTalla = await _ioClient
+                .get(Uri.parse("$baseUrl/records/Tallas/$idTalla"));
             if (resTalla.statusCode == 200) {
               final dataTalla = jsonDecode(resTalla.body);
-              // CORREGIDO: accedemos directamente a "nombre" del objeto
               talla = dataTalla["nombre"] ?? "Única";
             }
           }
 
-          final resProd = await _ioClient.get(Uri.parse("$baseUrl/records/Producto/$idProd"));
+          final resProd =
+          await _ioClient.get(Uri.parse("$baseUrl/records/Producto/$idProd"));
+
           final prodData = jsonDecode(resProd.body);
 
           productos.add({
@@ -269,9 +298,6 @@ class CestaService {
     } catch (e) {
       print("Error obteniendo productos del pedido $idPedido: $e");
     }
-
     return [];
   }
-
-
 }
