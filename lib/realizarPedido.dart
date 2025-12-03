@@ -84,7 +84,6 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
       final data = jsonDecode(res.body);
       final List lista = data["records"];
       setState(() {
-        // Guardamos id y tipo juntos
         metodosPagoList = lista.map<Map<String, dynamic>>((m) => {
           "id": m["id_metodo_pago"],
           "tipo": m["tipo"],
@@ -113,13 +112,11 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
       final idPedido = await CestaService.obtenerPedidoAbierto();
       if (idPedido == null) return;
 
-      // Obtener ID real del método de pago
       final idMetodoPago = metodosPagoList.firstWhere(
             (m) => m["tipo"] == metodoPago,
         orElse: () => {"id": 0},
       )["id"];
 
-      // Obtener ID real de la empresa
       final idEmpresa = empresasList.firstWhere(
             (e) => e["nombre"] == empresaSeleccionada!["nombre"],
         orElse: () => {"id": 0},
@@ -129,7 +126,7 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
         Uri.parse("https://185.189.221.84/api.php/records/Pedido/$idPedido"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
-          "id_estado": 2, // Cerrado
+          "id_estado": 2,
           "id_metodo_pago": idMetodoPago,
           "id_empresa": idEmpresa,
         }),
@@ -209,14 +206,29 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
                 if (index == 1) costo = 4.99;
 
                 return Card(
+                  color: seleccionada ? Colors.blueAccent : Colors.white,
                   margin: const EdgeInsets.symmetric(vertical: 8),
                   child: ListTile(
-                    title: Text(empresa["nombre"],
-                        style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text(empresa["descripcion"] ?? ""),
-                    trailing: Text(costo == 0 ? "Gratis" : "€$costo",
-                        style: const TextStyle(fontWeight: FontWeight.bold)),
-                    selected: seleccionada,
+                    title: Text(
+                      empresa["nombre"],
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: seleccionada ? Colors.white : Colors.black,
+                      ),
+                    ),
+                    subtitle: Text(
+                      empresa["descripcion"] ?? "",
+                      style: TextStyle(
+                        color: seleccionada ? Colors.white70 : Colors.black54,
+                      ),
+                    ),
+                    trailing: Text(
+                      costo == 0 ? "Gratis" : "€$costo",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: seleccionada ? Colors.white : Colors.black,
+                      ),
+                    ),
                     onTap: () {
                       setState(() {
                         empresaSeleccionada = empresa;
@@ -228,6 +240,17 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
               }),
             ),
             const SizedBox(height: 30),
+            // Nuevas líneas de resumen
+            Text(
+              "Total de los productos: €${totalCarrito.toStringAsFixed(2)}",
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 5),
+            Text(
+              "Gastos de envío: €${precioEnvio.toStringAsFixed(2)}",
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 15),
             Text(
               "Total a pagar: €${(totalCarrito + precioEnvio).toStringAsFixed(2)}",
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
@@ -245,7 +268,7 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
                   }
 
                   await _cerrarPedido();
-                  Navigator.pop(context); // volver atrás
+                  Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,
