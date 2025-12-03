@@ -238,14 +238,17 @@ class CestaService {
         List<Map<String, dynamic>> productos = [];
 
         for (var item in data["records"]) {
-          // Recuperamos info del producto
+
           final idProd = int.parse(item["id_producto"].toString());
-          final resProd = await _ioClient.get(Uri.parse("$baseUrl/records/Producto/$idProd"));
+
+          final resProd =
+          await _ioClient.get(Uri.parse("$baseUrl/records/Producto/$idProd"));
           final prodData = jsonDecode(resProd.body);
 
           productos.add({
+            "id_producto": idProd,  // ✅ AÑADIR ESTO
             "nombre": prodData["nombre"] ?? "Producto",
-            "imagen": prodData["imagen"] ?? null,
+            "imagen": "https://185.189.221.84/images/$idProd.jpg", // ✅ TU URL REAL
             "cantidad": int.parse(item["cantidad"].toString()),
             "precio": double.parse(item["precio_unitario"].toString()),
           });

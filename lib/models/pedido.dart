@@ -4,15 +4,17 @@ class Pedido {
   final int idMetodoPago;
   final int idEmpresa;
   String? primerProductoNombre;
-  String? primerProductoImagen;
+  int? primerProductoId;
+
+
 
   Pedido({
     required this.idPedido,
     required this.fecha,
     required this.idMetodoPago,
     required this.idEmpresa,
+    this.primerProductoId,
     this.primerProductoNombre,
-    this.primerProductoImagen,
   });
 
   factory Pedido.fromJson(Map<String, dynamic> json) {

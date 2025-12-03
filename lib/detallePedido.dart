@@ -62,7 +62,7 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
 
         temp.add({
           "nombre": dataProd["nombre"] ?? "Producto",
-          "imagen": dataProd["imagen"] ?? null,
+          "imagen": "https://185.189.221.84/images/$idProducto.jpg",
           "cantidad": int.parse(item["cantidad"].toString()),
           "precio_unitario": double.parse(item["precio_unitario"].toString()),
           "talla": item["id_talla"].toString(), // podrías mapear a la talla real si quieres

@@ -38,14 +38,20 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
   Future<void> _obtenerPrimerProducto(Pedido pedido) async {
     try {
       final productos = await CestaService.obtenerProductosPedido(pedido.idPedido);
+
       if (productos.isNotEmpty) {
         setState(() {
-          pedido.primerProductoNombre = productos[0]["nombre"] ?? "Producto";
-          pedido.primerProductoImagen = productos[0]["imagen"] ?? null;
+          pedido.primerProductoId = int.tryParse(
+            productos[0]["id_producto"].toString(),
+          ) ??
+              0;
+
+          pedido.primerProductoNombre =
+              productos[0]["nombre"]?.toString() ?? "Producto";
         });
       }
     } catch (e) {
-      // ignoramos errores aquí, solo no ponemos nombre/imagen
+      // Ignorar errores aquí
     }
   }
 
@@ -164,6 +170,9 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
           itemBuilder: (context, index) {
             final pedido = pedidos[index];
 
+            print("IMAGEN PEDIDO => https://185.189.221.84/images/${pedido.primerProductoId}.jpg");
+            print("ID REAL PRODUCTO => ${pedido.primerProductoId}");
+
             return Card(
               margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               shape: RoundedRectangleBorder(
@@ -172,12 +181,16 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
               elevation: 3,
               child: ListTile(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                leading: pedido.primerProductoImagen != null
+                leading: pedido.primerProductoId != null &&
+                    pedido.primerProductoId != 0
                     ? Image.network(
-                  pedido.primerProductoImagen!,
+                  "https://185.189.221.84/images/${pedido.primerProductoId}.jpg",
                   width: 50,
                   height: 50,
                   fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) {
+                    return const Icon(Icons.receipt_long, size: 40);
+                  },
                 )
                     : const Icon(Icons.receipt_long, size: 40),
                 title: Text(
