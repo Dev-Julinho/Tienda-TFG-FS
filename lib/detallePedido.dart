@@ -62,19 +62,15 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
         final idProducto = item["id_producto"];
         final idTalla = item["id_talla"];
 
-        // Producto
         final resProd = await ioClient
             .get(Uri.parse("${CestaService.baseUrl}/records/Producto/$idProducto"));
         final dataProd = jsonDecode(resProd.body);
 
-        // idTalla obtenido del detalle
         String talla = "Única";
-
         if (idTalla != null) {
           final resTalla = await ioClient.get(
               Uri.parse("${CestaService.baseUrl}/records/Tallas/$idTalla")
           );
-
           if (resTalla.statusCode == 200) {
             final dataTalla = jsonDecode(resTalla.body);
             if (dataTalla["talla"] != null) {
@@ -108,14 +104,19 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
 
   Future<void> _cargarEmpresaEnvio() async {
     try {
-      // Se asume que la API devuelve la empresa de envío del pedido
       final res = await ioClient.get(Uri.parse(
           "${CestaService.baseUrl}/records/Pedido/${widget.pedidoId}"));
       if (res.statusCode == 200) {
         final pedidoData = jsonDecode(res.body);
-
         final idEmpresa = pedidoData["id_empresa"];
+
         if (idEmpresa != null) {
+          double precio = 0;
+          // Copiado de RealizarPedidoPage
+          if (idEmpresa == 8) precio = 4.99;
+          else if (idEmpresa == 7) precio = 9.99;
+          else precio = 0; // gratis
+
           final resEmpresa = await ioClient.get(
               Uri.parse("${CestaService.baseUrl}/records/Empresa/$idEmpresa"));
           if (resEmpresa.statusCode == 200) {
@@ -124,9 +125,9 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
               empresaEnvio = {
                 "nombre": dataEmp["nombre"] ?? "-",
                 "descripcion": dataEmp["descripcion"] ?? "",
-                "precio": double.tryParse(dataEmp["precio_envio"]?.toString() ?? "0") ?? 0,
+                "precio": precio,
               };
-              precioEnvio = empresaEnvio?["precio"] ?? 0;
+              precioEnvio = precio;
             });
           }
         }
@@ -166,7 +167,6 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
               itemCount: productos.length + (empresaEnvio != null ? 1 : 0),
               itemBuilder: (context, index) {
                 if (empresaEnvio != null && index == productos.length) {
-                  // Mostrar empresa de envío debajo de los productos
                   return Card(
                     margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     shape: RoundedRectangleBorder(
@@ -176,7 +176,7 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
                       title: Text("Empresa de envío: ${empresaEnvio!["nombre"]}",
                           style: const TextStyle(fontWeight: FontWeight.bold)),
                       subtitle: Text(
-                          "${empresaEnvio!["descripcion"]}\nCosto adicional: €${empresaEnvio!["precio"].toStringAsFixed(2)}"),
+                          "${empresaEnvio!["descripcion"]}\nCosto adicional: ${empresaEnvio!["precio"] == 0 ? "Gratis" : "€${empresaEnvio!["precio"].toStringAsFixed(2)}"}"),
                     ),
                   );
                 }
@@ -217,7 +217,22 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
             color: Colors.grey[200],
             child: Column(
               children: [
-                // Línea de gastos de envío
+                // Total de productos
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text("Total de los productos:",
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold)),
+                    Text("€${totalProductos.toStringAsFixed(2)}",
+                        style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // Gastos de envío
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -225,14 +240,14 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
                         style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold)),
-                    Text("€${precioEnvio.toStringAsFixed(2)}",
+                    Text(precioEnvio == 0 ? "Gratis" : "€${precioEnvio.toStringAsFixed(2)}",
                         style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold)),
                   ],
                 ),
                 const SizedBox(height: 8),
-                // Línea de total
+                // Total final
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
