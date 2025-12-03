@@ -37,23 +37,33 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
 
   Future<void> _obtenerPrimerProducto(Pedido pedido) async {
     try {
-      final productos = await CestaService.obtenerProductosPedido(pedido.idPedido);
+      final productos =
+      await CestaService.obtenerProductosPedido(pedido.idPedido);
 
       if (productos.isNotEmpty) {
-        setState(() {
-          pedido.primerProductoId = int.tryParse(
-            productos[0]["id_producto"].toString(),
-          ) ??
-              0;
+        pedido.primerProductoId =
+            int.tryParse(productos[0]["id_producto"].toString()) ?? 0;
 
-          pedido.primerProductoNombre =
-              productos[0]["nombre"]?.toString() ?? "Producto";
-        });
+        pedido.primerProductoNombre =
+            productos[0]["nombre"]?.toString() ?? "Producto";
       }
+
+      // 👉 Obtener nombre de la empresa de ENVÍO
+      final resEmpresa = await ioClient.get(
+        Uri.parse("$baseUrl/records/Empresa/${pedido.idEmpresa}"),
+      );
+
+      if (resEmpresa.statusCode == 200) {
+        final dataEmp = jsonDecode(resEmpresa.body);
+        pedido.nombreEmpresa = dataEmp["nombre"] ?? "Empresa";
+      }
+
+      setState(() {});
     } catch (e) {
-      // Ignorar errores aquí
+      print("Error obteniendo datos extra: $e");
     }
   }
+
 
   Future<void> _obtenerPedidosCerrados() async {
     setState(() {
@@ -198,7 +208,7 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 subtitle: Text(
-                    "Fecha: ${_formatFecha(pedido.fecha)}\nEmpresa ID: ${pedido.idEmpresa}"),
+                    "Fecha: ${_formatFecha(pedido.fecha)}\nEmpresa: ${pedido.nombreEmpresa ?? '...'}"),
                 trailing: const Icon(
                   Icons.chevron_right,
                   size: 30,

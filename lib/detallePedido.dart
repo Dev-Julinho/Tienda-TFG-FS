@@ -23,7 +23,6 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
   void initState() {
     super.initState();
 
-    // HttpClient que acepta certificados inválidos (solo pruebas)
     HttpClient httpClient = HttpClient()
       ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
     ioClient = IOClient(httpClient);
@@ -38,7 +37,6 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
     });
 
     try {
-      // Usamos CestaService para obtener los productos del pedido
       final res = await ioClient.get(Uri.parse(
           "${CestaService.baseUrl}/records/Detalle_Pedido?filter=id_pedido,eq,${widget.pedidoId}"));
 
@@ -53,19 +51,43 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
       final data = jsonDecode(res.body);
       final List<dynamic> lista = data["records"] ?? [];
 
-      // Obtenemos info de cada producto
       List<Map<String, dynamic>> temp = [];
+
       for (var item in lista) {
         final idProducto = item["id_producto"];
-        final resProd = await ioClient.get(Uri.parse("${CestaService.baseUrl}/records/Producto/$idProducto"));
+        final idTalla = item["id_talla"];
+
+        // Producto
+        final resProd = await ioClient
+            .get(Uri.parse("${CestaService.baseUrl}/records/Producto/$idProducto"));
         final dataProd = jsonDecode(resProd.body);
+
+        // idTalla obtenido del detalle
+        String talla = "Única";
+
+        if (idTalla != null) {
+          final resTalla = await ioClient.get(
+              Uri.parse("${CestaService.baseUrl}/records/Tallas/$idTalla")
+          );
+
+          if (resTalla.statusCode == 200) {
+            final dataTalla = jsonDecode(resTalla.body);
+            // La API devuelve algo como {"id_talla":12,"talla":"44"} o {"id":12,"nombre":"44"}
+            if (dataTalla["talla"] != null) {
+              talla = dataTalla["talla"].toString();
+            } else if (dataTalla["nombre"] != null) {
+              talla = dataTalla["nombre"].toString();
+            }
+          }
+        }
+
 
         temp.add({
           "nombre": dataProd["nombre"] ?? "Producto",
           "imagen": "https://185.189.221.84/images/$idProducto.jpg",
           "cantidad": int.parse(item["cantidad"].toString()),
           "precio_unitario": double.parse(item["precio_unitario"].toString()),
-          "talla": item["id_talla"].toString(), // podrías mapear a la talla real si quieres
+          "talla": talla,
         });
       }
 
@@ -100,7 +122,8 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
       body: cargando
           ? const Center(child: CircularProgressIndicator())
           : error != null
-          ? Center(child: Text(error!, style: const TextStyle(color: Colors.red)))
+          ? Center(
+          child: Text(error!, style: const TextStyle(color: Colors.red)))
           : Column(
         children: [
           Expanded(
@@ -114,14 +137,24 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
                       borderRadius: BorderRadius.circular(12)),
                   elevation: 2,
                   child: ListTile(
-                    leading: prod["imagen"] != null
-                        ? Image.network(prod["imagen"], width: 50, height: 50, fit: BoxFit.cover)
-                        : const Icon(Icons.image, size: 50),
-                    title: Text(prod["nombre"], style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text("Talla: ${prod["talla"]}\nCantidad: ${prod["cantidad"]}"),
+                    leading: Image.network(
+                      prod["imagen"],
+                      width: 50,
+                      height: 50,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) {
+                        return const Icon(Icons.image, size: 50);
+                      },
+                    ),
+                    title: Text(prod["nombre"],
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold)),
+                    subtitle: Text(
+                        "Talla: ${prod["talla"]}\nCantidad: ${prod["cantidad"]}"),
                     trailing: Text(
                       "€${(prod["precio_unitario"] * prod["cantidad"]).toStringAsFixed(2)}",
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold),
                     ),
                   ),
                 );
@@ -136,10 +169,12 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
               children: [
                 const Text("Total:",
                     style: TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold)),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold)),
                 Text("€${total.toStringAsFixed(2)}",
                     style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold)),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold)),
               ],
             ),
           )

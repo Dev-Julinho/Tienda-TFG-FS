@@ -238,19 +238,29 @@ class CestaService {
         List<Map<String, dynamic>> productos = [];
 
         for (var item in data["records"]) {
-
           final idProd = int.parse(item["id_producto"].toString());
+          final idTalla = int.tryParse(item["id_talla"]?.toString() ?? "");
+          String talla = "Única";
 
-          final resProd =
-          await _ioClient.get(Uri.parse("$baseUrl/records/Producto/$idProd"));
+          if (idTalla != null) {
+            final resTalla = await _ioClient.get(Uri.parse("$baseUrl/records/Tallas/$idTalla"));
+            if (resTalla.statusCode == 200) {
+              final dataTalla = jsonDecode(resTalla.body);
+              // CORREGIDO: accedemos directamente a "nombre" del objeto
+              talla = dataTalla["nombre"] ?? "Única";
+            }
+          }
+
+          final resProd = await _ioClient.get(Uri.parse("$baseUrl/records/Producto/$idProd"));
           final prodData = jsonDecode(resProd.body);
 
           productos.add({
-            "id_producto": idProd,  // ✅ AÑADIR ESTO
+            "id_producto": idProd,
             "nombre": prodData["nombre"] ?? "Producto",
-            "imagen": "https://185.189.221.84/images/$idProd.jpg", // ✅ TU URL REAL
+            "imagen": "https://185.189.221.84/images/$idProd.jpg",
             "cantidad": int.parse(item["cantidad"].toString()),
             "precio": double.parse(item["precio_unitario"].toString()),
+            "talla": talla,
           });
         }
 
@@ -262,5 +272,6 @@ class CestaService {
 
     return [];
   }
+
 
 }
