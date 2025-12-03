@@ -19,6 +19,10 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
   String? error;
   List<Map<String, dynamic>> productos = [];
 
+  // Datos de la empresa de envío
+  Map<String, dynamic>? empresaEnvio;
+  double precioEnvio = 0;
+
   @override
   void initState() {
     super.initState();
@@ -28,6 +32,7 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
     ioClient = IOClient(httpClient);
 
     _cargarProductos();
+    _cargarEmpresaEnvio();
   }
 
   Future<void> _cargarProductos() async {
@@ -72,7 +77,6 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
 
           if (resTalla.statusCode == 200) {
             final dataTalla = jsonDecode(resTalla.body);
-            // La API devuelve algo como {"id_talla":12,"talla":"44"} o {"id":12,"nombre":"44"}
             if (dataTalla["talla"] != null) {
               talla = dataTalla["talla"].toString();
             } else if (dataTalla["nombre"] != null) {
@@ -80,7 +84,6 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
             }
           }
         }
-
 
         temp.add({
           "nombre": dataProd["nombre"] ?? "Producto",
@@ -103,8 +106,40 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
     }
   }
 
-  double get total =>
+  Future<void> _cargarEmpresaEnvio() async {
+    try {
+      // Se asume que la API devuelve la empresa de envío del pedido
+      final res = await ioClient.get(Uri.parse(
+          "${CestaService.baseUrl}/records/Pedido/${widget.pedidoId}"));
+      if (res.statusCode == 200) {
+        final pedidoData = jsonDecode(res.body);
+
+        final idEmpresa = pedidoData["id_empresa"];
+        if (idEmpresa != null) {
+          final resEmpresa = await ioClient.get(
+              Uri.parse("${CestaService.baseUrl}/records/Empresa/$idEmpresa"));
+          if (resEmpresa.statusCode == 200) {
+            final dataEmp = jsonDecode(resEmpresa.body);
+            setState(() {
+              empresaEnvio = {
+                "nombre": dataEmp["nombre"] ?? "-",
+                "descripcion": dataEmp["descripcion"] ?? "",
+                "precio": double.tryParse(dataEmp["precio_envio"]?.toString() ?? "0") ?? 0,
+              };
+              precioEnvio = empresaEnvio?["precio"] ?? 0;
+            });
+          }
+        }
+      }
+    } catch (e) {
+      print("Error cargando empresa de envío: $e");
+    }
+  }
+
+  double get totalProductos =>
       productos.fold(0, (sum, p) => sum + p["precio_unitario"] * p["cantidad"]);
+
+  double get total => totalProductos + precioEnvio;
 
   @override
   void dispose() {
@@ -128,8 +163,24 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
         children: [
           Expanded(
             child: ListView.builder(
-              itemCount: productos.length,
+              itemCount: productos.length + (empresaEnvio != null ? 1 : 0),
               itemBuilder: (context, index) {
+                if (empresaEnvio != null && index == productos.length) {
+                  // Mostrar empresa de envío debajo de los productos
+                  return Card(
+                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
+                    color: Colors.blue[100],
+                    child: ListTile(
+                      title: Text("Empresa de envío: ${empresaEnvio!["nombre"]}",
+                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                      subtitle: Text(
+                          "${empresaEnvio!["descripcion"]}\nCosto adicional: €${empresaEnvio!["precio"].toStringAsFixed(2)}"),
+                    ),
+                  );
+                }
+
                 final prod = productos[index];
                 return Card(
                   margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -164,20 +215,40 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
           Container(
             padding: const EdgeInsets.all(16),
             color: Colors.grey[200],
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            child: Column(
               children: [
-                const Text("Total:",
-                    style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold)),
-                Text("€${total.toStringAsFixed(2)}",
-                    style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold)),
+                // Línea de gastos de envío
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text("Gastos de envío:",
+                        style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold)),
+                    Text("€${precioEnvio.toStringAsFixed(2)}",
+                        style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold)),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                // Línea de total
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text("Total:",
+                        style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold)),
+                    Text("€${total.toStringAsFixed(2)}",
+                        style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold)),
+                  ],
+                ),
               ],
             ),
-          )
+          ),
         ],
       ),
     );

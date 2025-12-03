@@ -48,7 +48,7 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
             productos[0]["nombre"]?.toString() ?? "Producto";
       }
 
-      // 👉 Obtener nombre de la empresa de ENVÍO
+      // Obtener nombre de la empresa de envío
       final resEmpresa = await ioClient.get(
         Uri.parse("$baseUrl/records/Empresa/${pedido.idEmpresa}"),
       );
@@ -63,7 +63,6 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
       print("Error obteniendo datos extra: $e");
     }
   }
-
 
   Future<void> _obtenerPedidosCerrados() async {
     setState(() {
@@ -107,7 +106,7 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
         cargando = false;
       });
 
-      // Ahora obtenemos el primer producto de cada pedido
+      // Obtener primer producto de cada pedido
       for (var pedido in pedidos) {
         _obtenerPrimerProducto(pedido);
       }
@@ -119,12 +118,16 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
     }
   }
 
-  String _formatFecha(String raw) {
+  // Función que devuelve solo la fecha, sin la hora
+  String _formatFecha(String? raw) {
+    if (raw == null || raw.isEmpty) return "-";
     try {
       final dt = DateTime.parse(raw);
-      return "${dt.day.toString().padLeft(2, '0')}/${dt.month.toString().padLeft(2, '0')}/${dt.year} ${dt.hour.toString().padLeft(2,'0')}:${dt.minute.toString().padLeft(2,'0')}";
+      return "${dt.day.toString().padLeft(2,'0')}/"
+          "${dt.month.toString().padLeft(2,'0')}/"
+          "${dt.year}";
     } catch (_) {
-      return raw.isNotEmpty ? raw : "-";
+      return raw;
     }
   }
 
@@ -150,7 +153,8 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
           children: [
             Padding(
               padding: const EdgeInsets.all(20.0),
-              child: Text(error!, style: const TextStyle(color: Colors.red)),
+              child:
+              Text(error!, style: const TextStyle(color: Colors.red)),
             ),
             Center(
               child: ElevatedButton(
@@ -180,17 +184,16 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
           itemBuilder: (context, index) {
             final pedido = pedidos[index];
 
-            print("IMAGEN PEDIDO => https://185.189.221.84/images/${pedido.primerProductoId}.jpg");
-            print("ID REAL PRODUCTO => ${pedido.primerProductoId}");
-
             return Card(
-              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              margin: const EdgeInsets.symmetric(
+                  horizontal: 16, vertical: 8),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
               ),
               elevation: 3,
               child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 12),
                 leading: pedido.primerProductoId != null &&
                     pedido.primerProductoId != 0
                     ? Image.network(
@@ -204,8 +207,10 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
                 )
                     : const Icon(Icons.receipt_long, size: 40),
                 title: Text(
-                  pedido.primerProductoNombre ?? "Pedido #${pedido.idPedido}",
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                  pedido.primerProductoNombre ??
+                      "Pedido #${pedido.idPedido}",
+                  style:
+                  const TextStyle(fontWeight: FontWeight.bold),
                 ),
                 subtitle: Text(
                     "Fecha: ${_formatFecha(pedido.fecha)}\nEmpresa: ${pedido.nombreEmpresa ?? '...'}"),
