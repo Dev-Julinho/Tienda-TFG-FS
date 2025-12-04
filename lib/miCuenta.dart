@@ -5,6 +5,7 @@ import 'package:http/io_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'login.dart';
 import 'misPedidos.dart';
+import 'cambiarDatosCliente.dart';
 
 class MiCuentaPage extends StatefulWidget {
   const MiCuentaPage({super.key});
@@ -26,9 +27,11 @@ class _MiCuentaPageState extends State<MiCuentaPage> {
   @override
   void initState() {
     super.initState();
-    // Crear HttpClient que acepte certificados no válidos (solo pruebas)
+
     HttpClient httpClient = HttpClient()
-      ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+
     ioClient = IOClient(httpClient);
 
     _cargarDatosUsuario();
@@ -39,9 +42,7 @@ class _MiCuentaPageState extends State<MiCuentaPage> {
     int? idCliente = prefs.getInt("id_cliente");
 
     if (idCliente == null) {
-      setState(() {
-        cargando = false;
-      });
+      setState(() => cargando = false);
       return;
     }
 
@@ -57,10 +58,7 @@ class _MiCuentaPageState extends State<MiCuentaPage> {
         cargando = false;
       });
     } else {
-      setState(() {
-        cargando = false;
-      });
-      // Puedes mostrar un mensaje de error si quieres
+      setState(() => cargando = false);
     }
   }
 
@@ -74,13 +72,13 @@ class _MiCuentaPageState extends State<MiCuentaPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF00122B), // Fondo oscuro
+        backgroundColor: const Color(0xFF00122B),
         centerTitle: true,
         title: const Text(
           "Mi Cuenta",
-          style: TextStyle(color: Colors.white), // Letras blancas
+          style: TextStyle(color: Colors.white),
         ),
-        iconTheme: const IconThemeData(color: Colors.white), // Iconos blancos
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
 
       body: cargando
@@ -90,33 +88,29 @@ class _MiCuentaPageState extends State<MiCuentaPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // Foto de perfil
             CircleAvatar(
               radius: 60,
-              backgroundImage: NetworkImage("https://api.dicebear.com/6.x/identicon/png?seed=${DateTime.now().millisecondsSinceEpoch}"),
+              backgroundImage: NetworkImage(
+                  "https://api.dicebear.com/6.x/identicon/png?seed=${DateTime.now().millisecondsSinceEpoch}"),
             ),
             const SizedBox(height: 20),
 
-            // Nombre
             Text(
               nombre,
               style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+                  fontSize: 24, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 5),
 
-            // Email
             Text(
               email,
               style: TextStyle(fontSize: 16, color: Colors.grey[700]),
             ),
             const SizedBox(height: 30),
 
-            // Tarjeta con datos
             Card(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15)),
               elevation: 3,
               child: Padding(
                 padding: const EdgeInsets.all(20),
@@ -165,7 +159,6 @@ class _MiCuentaPageState extends State<MiCuentaPage> {
               ),
             ),
 
-            // ----- TARJETA MIS PEDIDOS -----
             const SizedBox(height: 25),
 
             GestureDetector(
@@ -178,13 +171,11 @@ class _MiCuentaPageState extends State<MiCuentaPage> {
                 );
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 18),
+                padding: const EdgeInsets.symmetric(
+                    vertical: 20, horizontal: 18),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [
-                      Color(0xFF0B5EB6),
-                      Color(0xFF002B51)
-                    ],
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF0B5EB6), Color(0xFF002B51)],
                   ),
                   borderRadius: BorderRadius.circular(15),
                   boxShadow: [
@@ -197,34 +188,51 @@ class _MiCuentaPageState extends State<MiCuentaPage> {
                 ),
                 child: Row(
                   children: const [
-                    Icon(
-                      Icons.receipt_long,
-                      color: Colors.white,
-                      size: 30,
-                    ),
+                    Icon(Icons.receipt_long,
+                        color: Colors.white, size: 30),
                     SizedBox(width: 15),
                     Expanded(
                       child: Text(
                         "Mis pedidos",
                         style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white),
                       ),
                     ),
-                    Icon(
-                      Icons.arrow_forward_ios,
-                      color: Colors.white,
-                      size: 18,
-                    ),
+                    Icon(Icons.arrow_forward_ios,
+                        color: Colors.white, size: 18),
                   ],
                 ),
               ),
             ),
 
             const SizedBox(height: 40),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (_) => const CambiarDatosClientePage()),
+                  );
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange,
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                ),
+                child: const Text(
+                  "Cambiar datos",
+                  style: TextStyle(
+                      fontSize: 18,
+                      color: Colors.black,
+                      fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
 
+            const SizedBox(height: 20),
             // Botón cerrar sesión
             SizedBox(
               width: double.infinity,
@@ -235,7 +243,8 @@ class _MiCuentaPageState extends State<MiCuentaPage> {
 
                   Navigator.pushAndRemoveUntil(
                     context,
-                    MaterialPageRoute(builder: (_) => const LoginScreen()),
+                    MaterialPageRoute(
+                        builder: (_) => const LoginScreen()),
                         (route) => false,
                   );
                 },
@@ -245,7 +254,7 @@ class _MiCuentaPageState extends State<MiCuentaPage> {
                 ),
                 child: const Text(
                   "Cerrar sesión",
-                  style: TextStyle(fontSize: 18, color: Colors.white),
+                  style: TextStyle(fontSize: 18, color: Colors.black),
                 ),
               ),
             ),
