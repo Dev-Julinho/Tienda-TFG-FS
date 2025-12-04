@@ -19,7 +19,6 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
   String? error;
   List<Map<String, dynamic>> productos = [];
 
-  // Datos de la empresa de envío
   Map<String, dynamic>? empresaEnvio;
   double precioEnvio = 0;
 
@@ -69,8 +68,7 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
         String talla = "Única";
         if (idTalla != null) {
           final resTalla = await ioClient.get(
-              Uri.parse("${CestaService.baseUrl}/records/Tallas/$idTalla")
-          );
+              Uri.parse("${CestaService.baseUrl}/records/Tallas/$idTalla"));
           if (resTalla.statusCode == 200) {
             final dataTalla = jsonDecode(resTalla.body);
             if (dataTalla["talla"] != null) {
@@ -112,10 +110,9 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
 
         if (idEmpresa != null) {
           double precio = 0;
-          // Copiado de RealizarPedidoPage
           if (idEmpresa == 8) precio = 4.99;
           else if (idEmpresa == 7) precio = 9.99;
-          else precio = 0; // gratis
+          else precio = 0;
 
           final resEmpresa = await ioClient.get(
               Uri.parse("${CestaService.baseUrl}/records/Empresa/$idEmpresa"));
@@ -151,10 +148,19 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFE3ECF8),
+
       appBar: AppBar(
-        title: Text("Pedido #${widget.pedidoId}"),
+        backgroundColor: const Color(0xFF00122B),
         centerTitle: true,
+        elevation: 4,
+        title: Text(
+          "Pedido #${widget.pedidoId}",
+          style: const TextStyle(color: Colors.white),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
+
       body: cargando
           ? const Center(child: CircularProgressIndicator())
           : error != null
@@ -168,44 +174,56 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
               itemBuilder: (context, index) {
                 if (empresaEnvio != null && index == productos.length) {
                   return Card(
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    margin: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 8),
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12)),
-                    color: Colors.blue[100],
+                    color: Colors.white,
+                    elevation: 3,
                     child: ListTile(
-                      title: Text("Empresa de envío: ${empresaEnvio!["nombre"]}",
-                          style: const TextStyle(fontWeight: FontWeight.bold)),
+                      title: Text(
+                          "Empresa de envío: ${empresaEnvio!["nombre"]}",
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF0A3D62))),
                       subtitle: Text(
-                          "${empresaEnvio!["descripcion"]}\nCosto adicional: ${empresaEnvio!["precio"] == 0 ? "Gratis" : "€${empresaEnvio!["precio"].toStringAsFixed(2)}"}"),
+                          "${empresaEnvio!["descripcion"]}\nCosto adicional: ${empresaEnvio!["precio"] == 0 ? "Gratis" : "€${empresaEnvio!["precio"].toStringAsFixed(2)}"}",
+                          style: const TextStyle(color: Colors.black87)),
                     ),
                   );
                 }
 
                 final prod = productos[index];
                 return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  margin: const EdgeInsets.symmetric(
+                      horizontal: 16, vertical: 8),
                   shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12)),
-                  elevation: 2,
+                  elevation: 3,
                   child: ListTile(
-                    leading: Image.network(
-                      prod["imagen"],
-                      width: 50,
-                      height: 50,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) {
-                        return const Icon(Icons.image, size: 50);
-                      },
+                    leading: ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        prod["imagen"],
+                        width: 50,
+                        height: 50,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) =>
+                        const Icon(Icons.image, size: 50, color: Colors.grey),
+                      ),
                     ),
                     title: Text(prod["nombre"],
                         style: const TextStyle(
-                            fontWeight: FontWeight.bold)),
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF0A3D62))),
                     subtitle: Text(
-                        "Talla: ${prod["talla"]}\nCantidad: ${prod["cantidad"]}"),
+                        "Talla: ${prod["talla"]}\nCantidad: ${prod["cantidad"]}",
+                        style: const TextStyle(color: Colors.black87)),
                     trailing: Text(
                       "€${(prod["precio_unitario"] * prod["cantidad"]).toStringAsFixed(2)}",
                       style: const TextStyle(
-                          fontWeight: FontWeight.bold),
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF0A3D62)),
                     ),
                   ),
                 );
@@ -213,11 +231,16 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
             ),
           ),
           Container(
-            padding: const EdgeInsets.all(16),
-            color: Colors.grey[200],
+            padding: const EdgeInsets.all(20),
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black12, blurRadius: 6, offset: Offset(0, -3)),
+              ],
+            ),
             child: Column(
               children: [
-                // Total de productos
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -227,12 +250,10 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
                             fontWeight: FontWeight.bold)),
                     Text("€${totalProductos.toStringAsFixed(2)}",
                         style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold)),
+                            fontSize: 16, fontWeight: FontWeight.bold)),
                   ],
                 ),
                 const SizedBox(height: 8),
-                // Gastos de envío
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
@@ -240,25 +261,24 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
                         style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold)),
-                    Text(precioEnvio == 0 ? "Gratis" : "€${precioEnvio.toStringAsFixed(2)}",
+                    Text(precioEnvio == 0
+                        ? "Gratis"
+                        : "€${precioEnvio.toStringAsFixed(2)}",
                         style: const TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold)),
                   ],
                 ),
                 const SizedBox(height: 8),
-                // Total final
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     const Text("Total:",
                         style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold)),
+                            fontSize: 18, fontWeight: FontWeight.bold)),
                     Text("€${total.toStringAsFixed(2)}",
                         style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold)),
+                            fontSize: 18, fontWeight: FontWeight.bold)),
                   ],
                 ),
               ],

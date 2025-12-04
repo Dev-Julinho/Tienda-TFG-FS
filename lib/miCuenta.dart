@@ -74,9 +74,15 @@ class _MiCuentaPageState extends State<MiCuentaPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Mi Cuenta"),
+        backgroundColor: const Color(0xFF00122B), // Fondo oscuro
         centerTitle: true,
+        title: const Text(
+          "Mi Cuenta",
+          style: TextStyle(color: Colors.white), // Letras blancas
+        ),
+        iconTheme: const IconThemeData(color: Colors.white), // Iconos blancos
       ),
+
       body: cargando
           ? const Center(child: CircularProgressIndicator())
           : SingleChildScrollView(
@@ -176,8 +182,8 @@ class _MiCuentaPageState extends State<MiCuentaPage> {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
-                      Colors.deepPurple.shade400,
-                      Colors.deepPurple.shade700
+                      Color(0xFF0B5EB6),
+                      Color(0xFF002B51)
                     ],
                   ),
                   borderRadius: BorderRadius.circular(15),

@@ -158,7 +158,16 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Realizar Pedido"), centerTitle: true),
+      appBar: AppBar(
+        backgroundColor: Color(0xFF00122B),
+        centerTitle: true,
+        elevation: 4,
+        title: const Text(
+          "Realizar Pedido",
+          style: TextStyle(color: Colors.white),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -169,6 +178,8 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
             CheckboxListTile(
               title: const Text("Modificar datos del usuario"),
               value: permitirEdicion,
+              activeColor: const Color(0xFF0056B3), // azul al marcar
+              checkColor: Colors.white,
               onChanged: (value) => setState(() => permitirEdicion = value ?? false),
             ),
             _campo("Nombre", nombre),
@@ -191,6 +202,12 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
               ))
                   .toList(),
               onChanged: (value) => setState(() => metodoPago = value),
+              decoration: const InputDecoration(
+                focusedBorder: OutlineInputBorder(
+                  borderSide: BorderSide(color: Color(0xFF0056B3), width: 2),
+                ),
+                border: OutlineInputBorder(),
+              ),
             ),
             const SizedBox(height: 20),
             const Text("Empresa de envío",
@@ -206,7 +223,7 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
                 if (index == 1) costo = 4.99;
 
                 return Card(
-                  color: seleccionada ? Colors.blueAccent : Colors.white,
+                  color: seleccionada ? const Color(0xFF0056B3) : Colors.white,
                   margin: const EdgeInsets.symmetric(vertical: 8),
                   child: ListTile(
                     title: Text(
@@ -240,7 +257,6 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
               }),
             ),
             const SizedBox(height: 30),
-            // Nuevas líneas de resumen
             Text(
               "Total de los productos: €${totalCarrito.toStringAsFixed(2)}",
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
@@ -271,7 +287,7 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
                   Navigator.pop(context);
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
+                  backgroundColor: const Color(0xFF0056B3),
                   padding: const EdgeInsets.symmetric(vertical: 15),
                 ),
                 child: const Text(
@@ -294,9 +310,17 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
         controller: controller,
         readOnly: !permitirEdicion,
         keyboardType: tipo,
+        cursorColor: const Color(0xFF0056B3),
+        style: const TextStyle(color: Colors.black),
         decoration: InputDecoration(
           labelText: label,
           border: const OutlineInputBorder(),
+          filled: true,
+          fillColor: Colors.white,
+          focusedBorder: OutlineInputBorder(
+            borderSide: const BorderSide(color: Color(0xFF0056B3), width: 2),
+            borderRadius: BorderRadius.circular(8),
+          ),
         ),
       ),
     );

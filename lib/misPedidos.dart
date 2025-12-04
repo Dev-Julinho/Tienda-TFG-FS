@@ -26,7 +26,6 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
   void initState() {
     super.initState();
 
-    // HttpClient que acepta certificados inválidos (solo pruebas)
     HttpClient httpClient = HttpClient()
       ..badCertificateCallback =
           (X509Certificate cert, String host, int port) => true;
@@ -43,12 +42,10 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
       if (productos.isNotEmpty) {
         pedido.primerProductoId =
             int.tryParse(productos[0]["id_producto"].toString()) ?? 0;
-
         pedido.primerProductoNombre =
             productos[0]["nombre"]?.toString() ?? "Producto";
       }
 
-      // Obtener nombre de la empresa de envío
       final resEmpresa = await ioClient.get(
         Uri.parse("$baseUrl/records/Empresa/${pedido.idEmpresa}"),
       );
@@ -106,7 +103,6 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
         cargando = false;
       });
 
-      // Obtener primer producto de cada pedido
       for (var pedido in pedidos) {
         _obtenerPrimerProducto(pedido);
       }
@@ -118,13 +114,12 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
     }
   }
 
-  // Función que devuelve solo la fecha, sin la hora
   String _formatFecha(String? raw) {
     if (raw == null || raw.isEmpty) return "-";
     try {
       final dt = DateTime.parse(raw);
-      return "${dt.day.toString().padLeft(2,'0')}/"
-          "${dt.month.toString().padLeft(2,'0')}/"
+      return "${dt.day.toString().padLeft(2, '0')}/"
+          "${dt.month.toString().padLeft(2, '0')}/"
           "${dt.year}";
     } catch (_) {
       return raw;
@@ -140,10 +135,19 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFE3ECF8),
+
       appBar: AppBar(
-        title: const Text("Mis Pedidos"),
+        backgroundColor: const Color(0xFF00122B),
         centerTitle: true,
+        elevation: 4,
+        title: const Text(
+          "Mis Pedidos",
+          style: TextStyle(color: Colors.white),
+        ),
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
+
       body: RefreshIndicator(
         onRefresh: _obtenerPedidosCerrados,
         child: cargando
@@ -153,12 +157,17 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
           children: [
             Padding(
               padding: const EdgeInsets.all(20.0),
-              child:
-              Text(error!, style: const TextStyle(color: Colors.red)),
+              child: Text(error!,
+                  style: const TextStyle(color: Colors.red)),
             ),
             Center(
               child: ElevatedButton(
                 onPressed: _obtenerPedidosCerrados,
+                style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF0056B3),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 12, horizontal: 25)),
                 child: const Text("Reintentar"),
               ),
             ),
@@ -196,35 +205,45 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
                     horizontal: 16, vertical: 12),
                 leading: pedido.primerProductoId != null &&
                     pedido.primerProductoId != 0
-                    ? Image.network(
-                  "https://185.189.221.84/images/${pedido.primerProductoId}.jpg",
-                  width: 50,
-                  height: 50,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) {
-                    return const Icon(Icons.receipt_long, size: 40);
-                  },
+                    ? ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.network(
+                    "https://185.189.221.84/images/${pedido.primerProductoId}.jpg",
+                    width: 50,
+                    height: 50,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) =>
+                    const Icon(Icons.receipt_long,
+                        size: 40, color: Colors.grey),
+                  ),
                 )
-                    : const Icon(Icons.receipt_long, size: 40),
+                    : const Icon(Icons.receipt_long,
+                    size: 40, color: Colors.grey),
                 title: Text(
                   pedido.primerProductoNombre ??
                       "Pedido #${pedido.idPedido}",
-                  style:
-                  const TextStyle(fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF0A3D62)),
                 ),
                 subtitle: Text(
-                    "Fecha: ${_formatFecha(pedido.fecha)}\nEmpresa: ${pedido.nombreEmpresa ?? '...'}"),
+                  "Fecha: ${_formatFecha(pedido.fecha)}\nEmpresa: ${pedido.nombreEmpresa ?? '...'}",
+                  style: const TextStyle(color: Colors.black87),
+                ),
                 trailing: const Icon(
                   Icons.chevron_right,
                   size: 30,
+                  color: Colors.white,
                 ),
+                tileColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12)),
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
                       builder: (_) => DetallePedidoPage(
-                        pedidoId: pedido.idPedido,
-                      ),
+                          pedidoId: pedido.idPedido),
                     ),
                   );
                 },

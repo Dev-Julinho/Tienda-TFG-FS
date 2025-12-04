@@ -66,7 +66,6 @@ class _ProductosCategoriaState extends State<ProductosCategoria> {
   void _aplicarFiltros() {
     List<Producto> result = List.from(productos);
 
-    // 🔍 filtro búsqueda
     if (_searchText.isNotEmpty) {
       result = result
           .where((p) =>
@@ -74,7 +73,6 @@ class _ProductosCategoriaState extends State<ProductosCategoria> {
           .toList();
     }
 
-    // 🔧 ordenamiento
     switch (selectedPriceFilter) {
       case 'Precio: Menor a Mayor':
         result.sort((a, b) => a.precio.compareTo(b.precio));
@@ -85,11 +83,11 @@ class _ProductosCategoriaState extends State<ProductosCategoria> {
         break;
 
       case 'Más Populares':
-        result.sort((a, b) => b.id.compareTo(a.id)); // ajustar si tienes campo popularidad
+        result.sort((a, b) => b.id.compareTo(a.id));
         break;
 
       case 'Nuevos':
-        result.sort((a, b) => b.id.compareTo(a.id)); // mismo criterio
+        result.sort((a, b) => b.id.compareTo(a.id));
         break;
     }
 
@@ -106,11 +104,13 @@ class _ProductosCategoriaState extends State<ProductosCategoria> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Color(0xFFE3ECF8),
       appBar: AppBar(
+        backgroundColor: Color(0xFF00122B),
         title: _isSearching
             ? TextField(
           autofocus: true,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             hintText: 'Buscar producto...',
             border: InputBorder.none,
           ),
@@ -119,15 +119,23 @@ class _ProductosCategoriaState extends State<ProductosCategoria> {
             _aplicarFiltros();
           },
         )
-            : Text(widget.categoria.nombre,
-            style: TextStyle(fontWeight: FontWeight.bold)),
+            : Text(
+          widget.categoria.nombre,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 26,
+          ),
+        ),
         leading: IconButton(
-          icon: Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
-            icon: Icon(_isSearching ? Icons.close : Icons.search),
+            icon: Icon(
+                _isSearching ? Icons.close : Icons.search,
+                color: Colors.white),
             onPressed: () {
               setState(() {
                 if (_isSearching) {
@@ -141,11 +149,11 @@ class _ProductosCategoriaState extends State<ProductosCategoria> {
             },
           ),
           IconButton(
-              icon: Icon(Icons.person),
+              icon: const Icon(Icons.person, color: Colors.white),
               onPressed: () => Navigator.push(
                   context, MaterialPageRoute(builder: (_) => MiCuentaPage()))),
           IconButton(
-              icon: Icon(Icons.shopping_cart),
+              icon: const Icon(Icons.shopping_cart, color: Colors.white),
               onPressed: () => Navigator.push(
                   context, MaterialPageRoute(builder: (_) => CarritoPage()))),
         ],
@@ -153,7 +161,6 @@ class _ProductosCategoriaState extends State<ProductosCategoria> {
 
       body: Column(
         children: [
-          // 🔽 Dropdown filtros
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: DropdownButton<String>(
@@ -169,26 +176,15 @@ class _ProductosCategoriaState extends State<ProductosCategoria> {
             ),
           ),
 
-          // 📦 Lista de productos
           Expanded(
             child: productosFiltrados.isEmpty
-                ? Center(child: Text("No hay productos"))
+                ? const Center(child: Text("No hay productos"))
                 : ListView.builder(
               itemCount: productosFiltrados.length,
               itemBuilder: (context, index) {
                 final p = productosFiltrados[index];
 
-                return ListTile(
-                  leading: Image.network(
-                    "https://185.189.221.84/images/${p.id}.jpg",
-                    width: 60,
-                    height: 60,
-                    fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) =>
-                        Icon(Icons.broken_image),
-                  ),
-                  title: Text(p.nombre),
-                  subtitle: Text("${p.precio.toStringAsFixed(2)} €"),
+                return GestureDetector(
                   onTap: () {
                     Navigator.push(
                       context,
@@ -197,6 +193,69 @@ class _ProductosCategoriaState extends State<ProductosCategoria> {
                       ),
                     );
                   },
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(16),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.25),
+                          blurRadius: 8,
+                          spreadRadius: 2,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        // 📸 Imagen grande
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: Image.network(
+                            "https://185.189.221.84/images/${p.id}.jpg",
+                            width: 110,
+                            height: 110,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) =>
+                            const Icon(Icons.broken_image, size: 60),
+                          ),
+                        ),
+
+                        const SizedBox(width: 16),
+
+                        // 📝 Nombre + precio
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                p.nombre,
+                                style: const TextStyle(
+                                  fontSize: 20,
+                                  fontWeight: FontWeight.bold,
+                                  height: 1.2,
+                                ),
+                              ),
+
+                              const SizedBox(height: 8),
+
+                              Text(
+                                "${p.precio.toStringAsFixed(2)} €",
+                                style: const TextStyle(
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 );
               },
             ),

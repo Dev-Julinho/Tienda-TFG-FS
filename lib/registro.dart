@@ -40,7 +40,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             (X509Certificate cert, String host, int port) => true;
       IOClient ioClient = IOClient(httpClient);
       final response = await ioClient.post(
-          Uri.parse("https://185.189.221.84/api.php/records/Cliente"),
+        Uri.parse("https://185.189.221.84/api.php/records/Cliente"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
           "nombre": nombreController.text,
@@ -57,7 +57,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Cuenta creada correctamente",)),
+          const SnackBar(content: Text("Cuenta creada correctamente")),
         );
         Navigator.pop(context);
       } else {
@@ -65,7 +65,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
           SnackBar(content: Text("Error al registrar: ${response.body}")),
         );
       }
-
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error de conexión: $e")),
@@ -78,11 +77,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     return Scaffold(
       body: Stack(
         children: [
+          // Fondo negro sólido
           SizedBox.expand(
-            child: Image.network(
-              'https://images.unsplash.com/photo-1605296867304-46d5465a13f1?auto=format&fit=crop&w=1000&q=80',
-              fit: BoxFit.cover,
-            ),
+            child: Container(color: Colors.black),
           ),
 
           BackdropFilter(
@@ -143,8 +140,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
                 TextButton(
                   onPressed: () => Navigator.pop(context),
-                  child: const Text("Volver al Login", style: TextStyle(color: Colors.white70)),
-                )
+                  child: const Text(
+                    "Volver al Login",
+                    style: TextStyle(color: Colors.white70),
+                  ),
+                ),
               ],
             ),
           )
@@ -177,9 +177,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
             : null,
         filled: true,
         fillColor: Colors.white.withOpacity(0.05),
-        border: OutlineInputBorder(
+        enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
           borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFF5BD1E5), width: 2),
         ),
       ),
     );
@@ -198,7 +202,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
         child: Ink(
           decoration: const BoxDecoration(
             gradient: LinearGradient(
-              colors: [Color(0xFF00FF88), Color(0xFF00CC66)],
+              colors: [
+                Color(0xFF007BFF),
+                Color(0xFF0056B3)
+              ],
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
             ),
@@ -210,7 +217,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               text,
               style: const TextStyle(
                 fontSize: 18,
-                color: Colors.black,
+                color: Colors.white,
                 fontWeight: FontWeight.bold,
               ),
             ),

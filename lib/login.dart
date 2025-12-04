@@ -1,4 +1,4 @@
- import 'dart:convert';
+import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 import 'package:TFGPruebas/registro.dart';
@@ -37,48 +37,44 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      // Crear un HttpClient que acepte certificados no válidos (solo pruebas)
       HttpClient httpClient = HttpClient()
         ..badCertificateCallback =
             (X509Certificate cert, String host, int port) => true;
       IOClient ioClient = IOClient(httpClient);
 
-      //Hacer la petición GET usando IOClient
       final response = await ioClient.get(
-      //final response = await http.get(
-      Uri.parse(
-      "https://185.189.221.84/api.php/records/Cliente?filter[]=email,eq,$email&filter[]=contrasena,eq,$password")
-    );
+        Uri.parse(
+            "https://185.189.221.84/api.php/records/Cliente?filter[]=email,eq,$email&filter[]=contrasena,eq,$password"),
+      );
 
-    if (response.statusCode == 200) {
-    final data = json.decode(response.body);
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
 
-    if (data["records"].isNotEmpty) {
-    // LOGIN CORRECTO
-    final user = data["records"][0];
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    if (_rememberMe) {
-    await prefs.setBool("isLoggedIn", true);
-    }
-    await prefs.setInt("id_cliente", user["id_cliente"]);
-    await prefs.setString("userNombre", user["nombre"]);
-    await prefs.setString("userEmail", user["email"]);
+        if (data["records"].isNotEmpty) {
+          final user = data["records"][0];
+          SharedPreferences prefs = await SharedPreferences.getInstance();
+          if (_rememberMe) {
+            await prefs.setBool("isLoggedIn", true);
+          }
+          await prefs.setInt("id_cliente", user["id_cliente"]);
+          await prefs.setString("userNombre", user["nombre"]);
+          await prefs.setString("userEmail", user["email"]);
 
-    Navigator.pushReplacementNamed(context, "/home");
-    } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-    const SnackBar(content: Text('Credenciales incorrectas')),
-    );
-    }
-    } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text("Error del servidor: ${response.statusCode}")),
-    );
-    }
+          Navigator.pushReplacementNamed(context, "/home");
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Credenciales incorrectas')),
+          );
+        }
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Error del servidor: ${response.statusCode}")),
+        );
+      }
     } catch (e) {
-    ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(content: Text("Error de conexión: $e")),
-    );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error de conexión: $e")),
+      );
     }
 
     setState(() => _isLoading = false);
@@ -89,11 +85,9 @@ class _LoginScreenState extends State<LoginScreen> {
     return Scaffold(
       body: Stack(
         children: [
+          // Fondo negro sólido
           SizedBox.expand(
-            child: Image.network(
-              'https://images.unsplash.com/photo-1605296867304-46d5465a13f1?auto=format&fit=crop&w=1000&q=80',
-              fit: BoxFit.cover,
-            ),
+            child: Container(color: Colors.black),
           ),
 
           BackdropFilter(
@@ -103,42 +97,33 @@ class _LoginScreenState extends State<LoginScreen> {
 
           Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+              padding:
+              const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // LOGO
-                  Container(
-                    height: 90,
-                    width: 90,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF00FF88), Color(0xFF00CC66)],
-                      ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.greenAccent.withOpacity(0.4),
-                          blurRadius: 15,
-                          spreadRadius: 2,
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Logo sin espacio extra
+                      ClipOval(
+                        child: Image.asset(
+                          'assets/logo.png',
+                          height: 200,
+                          width: 200,
+                          fit: BoxFit.cover,
                         ),
-                      ],
-                    ),
-                    child: const Icon(
-                        Icons.fitness_center, color: Colors.white, size: 45),
+                      ),
+
+                      // Frase pegada al logo
+                      const Text(
+                        'Entrena. Mejora. Supera.',
+                        style: TextStyle(color: Colors.white70, fontSize: 16),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
                   ),
 
-                  const SizedBox(height: 20),
-                  const Text('FitZone',
-                      style: TextStyle(
-                        fontSize: 36,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                        letterSpacing: 1.5,
-                      )),
-                  const SizedBox(height: 6),
-                  const Text('Entrena. Mejora. Supera.',
-                      style: TextStyle(color: Colors.white70, fontSize: 16)),
                   const SizedBox(height: 40),
 
                   // FORM
@@ -176,8 +161,9 @@ class _LoginScreenState extends State<LoginScreen> {
                             Icons.lock,
                             suffix: IconButton(
                               icon: Icon(
-                                _isPasswordVisible ? Icons.visibility : Icons
-                                    .visibility_off,
+                                _isPasswordVisible
+                                    ? Icons.visibility
+                                    : Icons.visibility_off,
                                 color: Colors.white70,
                               ),
                               onPressed: () {
@@ -202,7 +188,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 });
                               },
                               checkColor: Colors.black,
-                              activeColor: Colors.greenAccent,
+                              activeColor: const Color(0xFF007BFF),
                             ),
                             const Text("Recordarme",
                                 style: TextStyle(color: Colors.white70)),
@@ -230,8 +216,8 @@ class _LoginScreenState extends State<LoginScreen> {
                               decoration: const BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
-                                    Color(0xFF00FF88),
-                                    Color(0xFF00CC66)
+                                    Color(0xFF007BFF), // azul claro
+                                    Color(0xFF0056B3)  // azul oscuro
                                   ],
                                   begin: Alignment.centerLeft,
                                   end: Alignment.centerRight,
@@ -245,7 +231,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   'Entrar',
                                   style: TextStyle(
                                     fontSize: 18,
-                                    color: Colors.black,
+                                    color: Colors.white,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -264,7 +250,8 @@ class _LoginScreenState extends State<LoginScreen> {
                     children: [
                       TextButton(
                         onPressed: () {
-                          Navigator.push(context,
+                          Navigator.push(
+                              context,
                               MaterialPageRoute(
                                   builder: (_) => const RegisterScreen()));
                         },
@@ -297,7 +284,7 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Colors.greenAccent, width: 1.5),
+        borderSide: const BorderSide(color: Color(0xFF5BD1E5), width: 1.5),
       ),
     );
   }
