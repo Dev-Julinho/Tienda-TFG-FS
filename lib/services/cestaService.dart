@@ -11,22 +11,17 @@ import '../models/talla.dart';
 class CestaService {
   static const String baseUrl = "https://185.189.221.84/api.php";
 
-  // Cliente HTTP que ignora certificados inválidos
   static final HttpClient _httpClient = HttpClient()
     ..badCertificateCallback =
         (X509Certificate cert, String host, int port) => true;
 
   static final IOClient _ioClient = IOClient(_httpClient);
 
-  // Obtener id_cliente almacenado en SharedPreferences
   static Future<int?> getIdCliente() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     return prefs.getInt("id_cliente");
   }
 
-  // ======================================
-  // 1. Obtener pedido abierto
-  // ======================================
   static Future<int?> obtenerPedidoAbierto() async {
     try {
       int? idCliente = await getIdCliente();
@@ -46,9 +41,6 @@ class CestaService {
     return null;
   }
 
-  // ======================================
-  // 2. Crear pedido
-  // ======================================
   static Future<int?> crearPedido() async {
     try {
       int? idCliente = await getIdCliente();
@@ -76,9 +68,6 @@ class CestaService {
     return null;
   }
 
-  // ======================================
-  // 3. ELIMINAR PEDIDO SI NO TIENE PRODUCTOS
-  // ======================================
   static Future<void> eliminarPedidoSiVacio(int idPedido) async {
     try {
       final res = await _ioClient.get(Uri.parse(
@@ -98,9 +87,6 @@ class CestaService {
     }
   }
 
-  // ======================================
-  // 4. Agregar producto al pedido
-  // ======================================
   static Future<void> agregarProducto({
     required Producto producto,
     required Stock stockSeleccionado,
@@ -154,9 +140,6 @@ class CestaService {
     await cargarCarritoBBDD();
   }
 
-  // ======================================
-  // 5. Incrementar cantidad (botón +)
-  // ======================================
   static Future<void> incrementarCantidad(
       int idProducto, int idTalla, int stockMax) async {
     int? idPedido = await obtenerPedidoAbierto();
@@ -187,9 +170,6 @@ class CestaService {
     await cargarCarritoBBDD();
   }
 
-  // ======================================
-  // 6. Disminuir cantidad (botón -)
-  // ======================================
   static Future<void> disminuirCantidad(
       int idProducto, int idTalla) async {
     int? idPedido = await obtenerPedidoAbierto();
@@ -223,13 +203,9 @@ class CestaService {
 
     await cargarCarritoBBDD();
 
-    // 🔥 NUEVO: eliminar pedido si ya no quedan productos
     await eliminarPedidoSiVacio(idPedido);
   }
 
-  // ======================================
-  // 7. Cargar carrito desde BBDD
-  // ======================================
   static Future<void> cargarCarritoBBDD() async {
     int? idPedido = await obtenerPedidoAbierto();
     if (idPedido == null) return;
@@ -274,9 +250,6 @@ class CestaService {
     }
   }
 
-  // ======================================
-  // 8. Obtener productos de un pedido
-  // ======================================
   static Future<List<Map<String, dynamic>>> obtenerProductosPedido(
       int idPedido) async {
     try {
@@ -327,15 +300,11 @@ class CestaService {
     return [];
   }
 
-  // ======================================
-  // 9. Eliminar todos los productos del carrito a la vezs
-  // ======================================
   static Future<void> eliminarTodosLosProductos() async {
     int? idPedido = await obtenerPedidoAbierto();
     if (idPedido == null) return;
 
     try {
-      // 1. Borrar todos los detalles del pedido
       final resDetalles = await _ioClient.get(Uri.parse(
           "$baseUrl/records/Detalle_Pedido?filter=id_pedido,eq,$idPedido"));
 
@@ -348,11 +317,8 @@ class CestaService {
               .delete(Uri.parse("$baseUrl/records/Detalle_Pedido/$idDetalle"));
         }
       }
-
-      // 2. Borrar el pedido si ya no tiene productos
       await _ioClient.delete(Uri.parse("$baseUrl/records/Pedido/$idPedido"));
 
-      // 3. Vaciar el carrito local
       CarritoPage.carrito.clear();
 
     } catch (e) {

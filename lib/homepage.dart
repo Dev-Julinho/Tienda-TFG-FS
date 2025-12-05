@@ -169,10 +169,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Parte superior con gradiente negro → color card
-                  // Parte superior con gradiente más negro → color card
-                  // Parte superior con negro dominante y difuminado sutil
-                  // Parte superior con color del borde y difuminado hacia la card
                   Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
@@ -181,9 +177,9 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          borderColor.withOpacity(0.95), // color dominante de la parte superior
-                          borderColor.withOpacity(0.3),  // degradado hacia la card
-                          Colors.white.withOpacity(0.05), // solo un toque hacia la card
+                          borderColor.withOpacity(0.95),
+                          borderColor.withOpacity(0.3),
+                          Colors.white.withOpacity(0.05),
                         ],
                         stops: [0.0, 0.7, 1.0],
                       ),

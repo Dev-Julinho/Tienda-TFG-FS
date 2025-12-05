@@ -2,18 +2,15 @@ class Pedido {
   final int idPedido;
   final String fecha;
   final int idMetodoPago;
-  final int idEmpresa;
+
   String? primerProductoNombre;
   int? primerProductoId;
-  String? nombreEmpresa;
-
-
+  String? nombreEmpresa; // ahora viene de ENVIO
 
   Pedido({
     required this.idPedido,
     required this.fecha,
     required this.idMetodoPago,
-    required this.idEmpresa,
     this.primerProductoId,
     this.primerProductoNombre,
     this.nombreEmpresa,
@@ -23,8 +20,8 @@ class Pedido {
     return Pedido(
       idPedido: int.tryParse(json["id_pedido"]?.toString() ?? '0') ?? 0,
       fecha: json["fecha_pedido"]?.toString() ?? "",
-      idMetodoPago: int.tryParse(json["id_metodo_pago"]?.toString() ?? '0') ?? 0,
-      idEmpresa: int.tryParse(json["id_empresa"]?.toString() ?? '0') ?? 0,
+      idMetodoPago:
+      int.tryParse(json["id_metodo_pago"]?.toString() ?? '0') ?? 0,
     );
   }
 }

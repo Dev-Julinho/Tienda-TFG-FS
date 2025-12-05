@@ -58,8 +58,7 @@ class _CarritoPageState extends State<CarritoPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFE3ECF8), // 🔵 Fondo estilo login
-
+      backgroundColor: const Color(0xFFE3ECF8),
       appBar: AppBar(
         backgroundColor: Color(0xFF00122B),
         centerTitle: true,
@@ -97,7 +96,6 @@ class _CarritoPageState extends State<CarritoPage> {
                     child: ListTile(
                       contentPadding: const EdgeInsets.all(12),
 
-                      // ⭐ IMAGEN DEL PRODUCTO
                       leading: ClipRRect(
                         borderRadius: BorderRadius.circular(12),
                         child: Image.network(
@@ -114,7 +112,6 @@ class _CarritoPageState extends State<CarritoPage> {
                         ),
                       ),
 
-                      // ---------------- TEXTO ----------------
                       title: Text(
                         item["nombre"],
                         style: const TextStyle(
@@ -128,7 +125,6 @@ class _CarritoPageState extends State<CarritoPage> {
                         style: const TextStyle(color: Colors.black87),
                       ),
 
-                      // --------------- BOTONES CANTIDAD ---------------
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -174,7 +170,6 @@ class _CarritoPageState extends State<CarritoPage> {
             ),
           ),
 
-          // ---------------- FOOTER ----------------
           _footer(),
         ],
       ),
@@ -205,7 +200,6 @@ class _CarritoPageState extends State<CarritoPage> {
           ),
           const SizedBox(height: 15),
 
-          // ELIMINAR TODO
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
@@ -224,12 +218,11 @@ class _CarritoPageState extends State<CarritoPage> {
 
           const SizedBox(height: 10),
 
-          // CONTINUAR
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF0056B3), // 🔵 Azul elegante
+                backgroundColor: Color(0xFF0056B3),
                 padding: const EdgeInsets.symmetric(vertical: 15),
               ),
               onPressed: () {

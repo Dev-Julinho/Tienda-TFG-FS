@@ -29,35 +29,54 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
     HttpClient httpClient = HttpClient()
       ..badCertificateCallback =
           (X509Certificate cert, String host, int port) => true;
-    ioClient = IOClient(httpClient);
 
+    ioClient = IOClient(httpClient);
     _obtenerPedidosCerrados();
   }
 
   Future<void> _obtenerPrimerProducto(Pedido pedido) async {
     try {
-      final productos =
-      await CestaService.obtenerProductosPedido(pedido.idPedido);
+      final productos = await CestaService.obtenerProductosPedido(pedido.idPedido);
 
       if (productos.isNotEmpty) {
+        final producto = productos[0];
+
         pedido.primerProductoId =
-            int.tryParse(productos[0]["id_producto"].toString()) ?? 0;
+            int.tryParse(producto["id_producto"].toString()) ?? 0;
+
         pedido.primerProductoNombre =
-            productos[0]["nombre"]?.toString() ?? "Producto";
+            producto["nombre"]?.toString() ?? "Producto";
       }
 
-      final resEmpresa = await ioClient.get(
-        Uri.parse("$baseUrl/records/Empresa/${pedido.idEmpresa}"),
+      final resEnvio = await ioClient.get(
+        Uri.parse("$baseUrl/records/Envio?filter=id_pedido,eq,${pedido.idPedido}"),
       );
 
-      if (resEmpresa.statusCode == 200) {
-        final dataEmp = jsonDecode(resEmpresa.body);
-        pedido.nombreEmpresa = dataEmp["nombre"] ?? "Empresa";
+      if (resEnvio.statusCode == 200) {
+        final dataEnv = jsonDecode(resEnvio.body);
+
+        if (dataEnv["records"] != null && dataEnv["records"].isNotEmpty) {
+          final envio = dataEnv["records"][0];
+          final int? idEmpresa = int.tryParse(envio["id_empresa"].toString());
+
+          if (idEmpresa != null) {
+            final resEmpresa = await ioClient.get(
+              Uri.parse("$baseUrl/records/Empresa/$idEmpresa"),
+            );
+
+            if (resEmpresa.statusCode == 200) {
+              final dataEmp = jsonDecode(resEmpresa.body);
+              pedido.nombreEmpresa = dataEmp["nombre"]?.toString() ?? "Empresa";
+            }
+          }
+        }
       }
 
       setState(() {});
-    } catch (e) {
-      print("Error obteniendo datos extra: $e");
+
+    } catch (_) {
+      pedido.nombreEmpresa = "Empresa";
+      setState(() {});
     }
   }
 
@@ -79,9 +98,8 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
         return;
       }
 
-      final uri = Uri.parse(
-          "$baseUrl/records/Pedido?filter=id_cliente,eq,$idCliente&filter=id_estado,eq,2&sort=-fecha_pedido");
-      final res = await ioClient.get(uri);
+      final res = await ioClient.get(Uri.parse(
+          "$baseUrl/records/Pedido?filter=id_cliente,eq,$idCliente&filter=id_estado,eq,2&sort=-fecha_pedido"));
 
       if (res.statusCode != 200) {
         setState(() {
@@ -92,20 +110,19 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
       }
 
       final data = jsonDecode(res.body);
-      final List<dynamic> lista = data["records"] ?? [];
+      final List lista = data["records"] ?? [];
 
-      final List<Pedido> nuevas = lista
-          .map<Pedido>((e) => Pedido.fromJson(e as Map<String, dynamic>))
+      pedidos = lista
+          .map((e) => Pedido.fromJson(e as Map<String, dynamic>))
           .toList();
 
-      setState(() {
-        pedidos = nuevas;
-        cargando = false;
-      });
+      cargando = false;
+      setState(() {});
 
       for (var pedido in pedidos) {
         _obtenerPrimerProducto(pedido);
       }
+
     } catch (e) {
       setState(() {
         cargando = false;
@@ -136,18 +153,12 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFE3ECF8),
-
       appBar: AppBar(
         backgroundColor: const Color(0xFF00122B),
         centerTitle: true,
-        elevation: 4,
-        title: const Text(
-          "Mis Pedidos",
-          style: TextStyle(color: Colors.white),
-        ),
+        title: const Text("Mis Pedidos", style: TextStyle(color: Colors.white)),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-
       body: RefreshIndicator(
         onRefresh: _obtenerPedidosCerrados,
         child: cargando
@@ -201,8 +212,8 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
               ),
               elevation: 3,
               child: ListTile(
-                contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 12),
+                contentPadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 leading: pedido.primerProductoId != null &&
                     pedido.primerProductoId != 0
                     ? ClipRRect(
@@ -235,15 +246,12 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
                   size: 30,
                   color: Colors.white,
                 ),
-                tileColor: Colors.white,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12)),
                 onTap: () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (_) => DetallePedidoPage(
-                          pedidoId: pedido.idPedido),
+                      builder: (_) =>
+                          DetallePedidoPage(pedidoId: pedido.idPedido),
                     ),
                   );
                 },

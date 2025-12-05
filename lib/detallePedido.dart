@@ -27,7 +27,9 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
     super.initState();
 
     HttpClient httpClient = HttpClient()
-      ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+      ..badCertificateCallback =
+          (X509Certificate cert, String host, int port) => true;
+
     ioClient = IOClient(httpClient);
 
     _cargarProductos();
@@ -61,16 +63,20 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
         final idProducto = item["id_producto"];
         final idTalla = item["id_talla"];
 
-        final resProd = await ioClient
-            .get(Uri.parse("${CestaService.baseUrl}/records/Producto/$idProducto"));
+        final resProd = await ioClient.get(
+            Uri.parse("${CestaService.baseUrl}/records/Producto/$idProducto"));
+
         final dataProd = jsonDecode(resProd.body);
 
         String talla = "Única";
+
         if (idTalla != null) {
-          final resTalla = await ioClient.get(
-              Uri.parse("${CestaService.baseUrl}/records/Tallas/$idTalla"));
+          final resTalla = await ioClient
+              .get(Uri.parse("${CestaService.baseUrl}/records/Tallas/$idTalla"));
+
           if (resTalla.statusCode == 200) {
             final dataTalla = jsonDecode(resTalla.body);
+
             if (dataTalla["talla"] != null) {
               talla = dataTalla["talla"].toString();
             } else if (dataTalla["nombre"] != null) {
@@ -83,7 +89,8 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
           "nombre": dataProd["nombre"] ?? "Producto",
           "imagen": "https://185.189.221.84/images/$idProducto.jpg",
           "cantidad": int.parse(item["cantidad"].toString()),
-          "precio_unitario": double.parse(item["precio_unitario"].toString()),
+          "precio_unitario":
+          double.parse(item["precio_unitario"].toString()),
           "talla": talla,
         });
       }
@@ -102,22 +109,34 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
 
   Future<void> _cargarEmpresaEnvio() async {
     try {
-      final res = await ioClient.get(Uri.parse(
-          "${CestaService.baseUrl}/records/Pedido/${widget.pedidoId}"));
-      if (res.statusCode == 200) {
-        final pedidoData = jsonDecode(res.body);
-        final idEmpresa = pedidoData["id_empresa"];
+      final resEnvio = await ioClient.get(Uri.parse(
+          "${CestaService.baseUrl}/records/Envio?filter=id_pedido,eq,${widget.pedidoId}"));
 
-        if (idEmpresa != null) {
+      if (resEnvio.statusCode == 200) {
+        final data = jsonDecode(resEnvio.body);
+        final lista = data["records"];
+
+        if (lista != null && lista.isNotEmpty) {
+          final envio = lista[0];
+
+          final idEmpresa = envio["id_empresa"];
+
           double precio = 0;
-          if (idEmpresa == 8) precio = 4.99;
-          else if (idEmpresa == 7) precio = 9.99;
-          else precio = 0;
+
+          if (idEmpresa == 8) {
+            precio = 4.99;
+          } else if (idEmpresa == 7) {
+            precio = 9.99;
+          } else {
+            precio = 0;
+          }
 
           final resEmpresa = await ioClient.get(
               Uri.parse("${CestaService.baseUrl}/records/Empresa/$idEmpresa"));
+
           if (resEmpresa.statusCode == 200) {
             final dataEmp = jsonDecode(resEmpresa.body);
+
             setState(() {
               empresaEnvio = {
                 "nombre": dataEmp["nombre"] ?? "-",
@@ -149,7 +168,6 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFE3ECF8),
-
       appBar: AppBar(
         backgroundColor: const Color(0xFF00122B),
         centerTitle: true,
@@ -160,128 +178,63 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
         ),
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-
       body: cargando
           ? const Center(child: CircularProgressIndicator())
           : error != null
           ? Center(
-          child: Text(error!, style: const TextStyle(color: Colors.red)))
+          child:
+          Text(error!, style: const TextStyle(color: Colors.red)))
           : Column(
         children: [
           Expanded(
             child: ListView.builder(
-              itemCount: productos.length + (empresaEnvio != null ? 1 : 0),
+              itemCount:
+              productos.length + (empresaEnvio != null ? 1 : 0),
               itemBuilder: (context, index) {
-                if (empresaEnvio != null && index == productos.length) {
+                if (empresaEnvio != null &&
+                    index == productos.length) {
                   return Card(
                     margin: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 8),
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12)),
-                    color: Colors.white,
-                    elevation: 3,
                     child: ListTile(
                       title: Text(
-                          "Empresa de envío: ${empresaEnvio!["nombre"]}",
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF0A3D62))),
+                        "Empresa de envío: ${empresaEnvio!["nombre"]}",
+                        style: const TextStyle(
+                            fontWeight: FontWeight.bold),
+                      ),
                       subtitle: Text(
-                          "${empresaEnvio!["descripcion"]}\nCosto adicional: ${empresaEnvio!["precio"] == 0 ? "Gratis" : "€${empresaEnvio!["precio"].toStringAsFixed(2)}"}",
-                          style: const TextStyle(color: Colors.black87)),
+                        "${empresaEnvio!["descripcion"]}\nCosto adicional: ${empresaEnvio!["precio"] == 0 ? "Gratis" : "€${empresaEnvio!["precio"].toStringAsFixed(2)}"}",
+                      ),
                     ),
                   );
                 }
 
                 final prod = productos[index];
+
                 return Card(
                   margin: const EdgeInsets.symmetric(
                       horizontal: 16, vertical: 8),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12)),
-                  elevation: 3,
                   child: ListTile(
-                    leading: ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        prod["imagen"],
-                        width: 50,
-                        height: 50,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) =>
-                        const Icon(Icons.image, size: 50, color: Colors.grey),
-                      ),
+                    leading: Image.network(
+                      prod["imagen"],
+                      width: 50,
+                      height: 50,
+                      errorBuilder: (_, __, ___) =>
+                      const Icon(Icons.image),
                     ),
-                    title: Text(prod["nombre"],
-                        style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: Color(0xFF0A3D62))),
+                    title: Text(
+                      prod["nombre"],
+                      style: const TextStyle(
+                          fontWeight: FontWeight.bold),
+                    ),
                     subtitle: Text(
-                        "Talla: ${prod["talla"]}\nCantidad: ${prod["cantidad"]}",
-                        style: const TextStyle(color: Colors.black87)),
+                        "Talla: ${prod["talla"]}\nCantidad: ${prod["cantidad"]}"),
                     trailing: Text(
                       "€${(prod["precio_unitario"] * prod["cantidad"]).toStringAsFixed(2)}",
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF0A3D62)),
                     ),
                   ),
                 );
               },
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                    color: Colors.black12, blurRadius: 6, offset: Offset(0, -3)),
-              ],
-            ),
-            child: Column(
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text("Total de los productos:",
-                        style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold)),
-                    Text("€${totalProductos.toStringAsFixed(2)}",
-                        style: const TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text("Gastos de envío:",
-                        style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold)),
-                    Text(precioEnvio == 0
-                        ? "Gratis"
-                        : "€${precioEnvio.toStringAsFixed(2)}",
-                        style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold)),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text("Total:",
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
-                    Text("€${total.toStringAsFixed(2)}",
-                        style: const TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
-                  ],
-                ),
-              ],
             ),
           ),
         ],
