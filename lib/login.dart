@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:ui';
 import 'package:TFGPruebas/registro.dart';
+import 'package:TFGPruebas/tutorial.dart';
 import 'package:flutter/material.dart';
 import 'package:http/io_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -53,14 +54,25 @@ class _PantallaLoginState extends State<PantallaLogin> {
         if (data["records"].isNotEmpty) {
           final user = data["records"][0];
           SharedPreferences prefs = await SharedPreferences.getInstance();
+
           if (_rememberMe) {
             await prefs.setBool("isLoggedIn", true);
           }
+
           await prefs.setInt("id_cliente", user["id_cliente"]);
           await prefs.setString("userNombre", user["nombre"]);
           await prefs.setString("userEmail", user["email"]);
 
-          Navigator.pushReplacementNamed(context, "/home");
+          bool tutorialVisto = prefs.getBool("tutorial_visto") ?? false;
+
+          if (!tutorialVisto) {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const TutorialPage()),
+            );
+          } else {
+            Navigator.pushReplacementNamed(context, "/home");
+          }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Credenciales incorrectas')),
@@ -68,7 +80,8 @@ class _PantallaLoginState extends State<PantallaLogin> {
         }
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Error del servidor: ${response.statusCode}")),
+          SnackBar(
+              content: Text("Error del servidor: ${response.statusCode}")),
         );
       }
     } catch (e) {
@@ -76,6 +89,7 @@ class _PantallaLoginState extends State<PantallaLogin> {
         SnackBar(content: Text("Error de conexión: $e")),
       );
     }
+
     setState(() => _isLoading = false);
   }
 
@@ -84,7 +98,6 @@ class _PantallaLoginState extends State<PantallaLogin> {
     return Scaffold(
       body: Stack(
         children: [
-          // Fondo negro sólido
           SizedBox.expand(
             child: Container(color: Colors.black),
           ),
@@ -104,7 +117,6 @@ class _PantallaLoginState extends State<PantallaLogin> {
                   Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      // Logo sin espacio extra
                       ClipOval(
                         child: Image.asset(
                           'assets/logo.png',
@@ -214,8 +226,8 @@ class _PantallaLoginState extends State<PantallaLogin> {
                                   begin: Alignment.centerLeft,
                                   end: Alignment.centerRight,
                                 ),
-                                borderRadius: BorderRadius.all(
-                                    Radius.circular(14)),
+                                borderRadius:
+                                BorderRadius.all(Radius.circular(14)),
                               ),
                               child: Container(
                                 alignment: Alignment.center,
@@ -275,7 +287,8 @@ class _PantallaLoginState extends State<PantallaLogin> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFF5BD1E5), width: 1.5),
+        borderSide: const BorderSide(
+            color: Color(0xFF5BD1E5), width: 1.5),
       ),
     );
   }
