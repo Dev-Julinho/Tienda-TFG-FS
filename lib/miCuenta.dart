@@ -244,7 +244,7 @@ class _MiCuentaPageState extends State<MiCuentaPage> {
                   Navigator.pushAndRemoveUntil(
                     context,
                     MaterialPageRoute(
-                        builder: (_) => const LoginScreen()),
+                        builder: (_) => const PantallaLogin()),
                         (route) => false,
                   );
                 },

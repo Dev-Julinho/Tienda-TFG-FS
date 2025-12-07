@@ -4,14 +4,14 @@ import 'dart:ui';
 import 'package:http/io_client.dart';
 import 'package:flutter/material.dart';
 
-class RegisterScreen extends StatefulWidget {
-  const RegisterScreen({super.key});
+class PantallaRegistro extends StatefulWidget {
+  const PantallaRegistro({super.key});
 
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  State<PantallaRegistro> createState() => _PantallaRegistroState();
 }
 
-class _RegisterScreenState extends State<RegisterScreen> {
+class _PantallaRegistroState extends State<PantallaRegistro> {
   final TextEditingController nombreController = TextEditingController();
   final TextEditingController apellidosController = TextEditingController();
   final TextEditingController emailController = TextEditingController();

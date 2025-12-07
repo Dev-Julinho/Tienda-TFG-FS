@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-        home: isLoggedIn ? HomePage() : const LoginScreen(),
+        home: isLoggedIn ? HomePage() : const PantallaLogin(),
       routes: {
         "/home": (_) => HomePage(),
   }

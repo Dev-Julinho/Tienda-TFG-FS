@@ -6,14 +6,14 @@ import 'package:flutter/material.dart';
 import 'package:http/io_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class PantallaLogin extends StatefulWidget {
+  const PantallaLogin({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<PantallaLogin> createState() => _PantallaLoginState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _PantallaLoginState extends State<PantallaLogin> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
@@ -253,7 +253,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           Navigator.push(
                               context,
                               MaterialPageRoute(
-                                  builder: (_) => const RegisterScreen()));
+                                  builder: (_) => const PantallaRegistro()));
                         },
                         child: const Text('Crear cuenta',
                             style: TextStyle(color: Colors.white70)),
