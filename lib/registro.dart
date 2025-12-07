@@ -77,7 +77,6 @@ class _PantallaRegistroState extends State<PantallaRegistro> {
     return Scaffold(
       body: Stack(
         children: [
-          // Fondo negro sólido
           SizedBox.expand(
             child: Container(color: Colors.black),
           ),

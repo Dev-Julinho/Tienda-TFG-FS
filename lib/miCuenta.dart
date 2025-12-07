@@ -160,7 +160,6 @@ class _MiCuentaPageState extends State<MiCuentaPage> {
             ),
 
             const SizedBox(height: 25),
-
             GestureDetector(
               onTap: () {
                 Navigator.push(

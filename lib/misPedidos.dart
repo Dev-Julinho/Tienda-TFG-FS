@@ -71,7 +71,6 @@ class _MisPedidosPageState extends State<MisPedidosPage> {
           }
         }
       }
-
       setState(() {});
 
     } catch (_) {

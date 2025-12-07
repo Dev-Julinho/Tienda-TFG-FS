@@ -76,7 +76,6 @@ class _PantallaLoginState extends State<PantallaLogin> {
         SnackBar(content: Text("Error de conexión: $e")),
       );
     }
-
     setState(() => _isLoading = false);
   }
 
@@ -115,7 +114,6 @@ class _PantallaLoginState extends State<PantallaLogin> {
                         ),
                       ),
 
-                      // Frase pegada al logo
                       const Text(
                         'Entrena. Mejora. Supera.',
                         style: TextStyle(color: Colors.white70, fontSize: 16),
@@ -123,10 +121,8 @@ class _PantallaLoginState extends State<PantallaLogin> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 40),
 
-                  // FORM
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
@@ -174,10 +170,8 @@ class _PantallaLoginState extends State<PantallaLogin> {
                             ),
                           ),
                         ),
-
                         const SizedBox(height: 10),
 
-                        // CHECKBOX
                         Row(
                           children: [
                             Checkbox(
@@ -194,10 +188,8 @@ class _PantallaLoginState extends State<PantallaLogin> {
                                 style: TextStyle(color: Colors.white70)),
                           ],
                         ),
-
                         const SizedBox(height: 16),
 
-                        // BOTÓN LOGIN
                         SizedBox(
                           width: double.infinity,
                           height: 50,
@@ -216,8 +208,8 @@ class _PantallaLoginState extends State<PantallaLogin> {
                               decoration: const BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
-                                    Color(0xFF007BFF), // azul claro
-                                    Color(0xFF0056B3)  // azul oscuro
+                                    Color(0xFF007BFF),
+                                    Color(0xFF0056B3)
                                   ],
                                   begin: Alignment.centerLeft,
                                   end: Alignment.centerRight,
@@ -242,7 +234,6 @@ class _PantallaLoginState extends State<PantallaLogin> {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 20),
 
                   Row(

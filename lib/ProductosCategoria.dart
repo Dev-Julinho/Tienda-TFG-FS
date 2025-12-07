@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/io_client.dart';
-
 import 'models/producto.dart';
 import 'models/categoria.dart';
 import 'productoDetalle.dart';
@@ -223,10 +222,8 @@ class _ProductosCategoriaState extends State<ProductosCategoria> {
                             const Icon(Icons.broken_image, size: 60),
                           ),
                         ),
-
                         const SizedBox(width: 16),
 
-                        // 📝 Nombre + precio
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,7 +236,6 @@ class _ProductosCategoriaState extends State<ProductosCategoria> {
                                   height: 1.2,
                                 ),
                               ),
-
                               const SizedBox(height: 8),
 
                               Text(

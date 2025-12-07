@@ -160,9 +160,7 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
           "id_empresa": idEmpresa,
           "id_pedido": idPedido,
         }),
-
       );
-
       if (response.statusCode != 200 && response.statusCode != 201) {
         throw Exception("Error creando envío: ${response.body}");
       }
@@ -170,7 +168,6 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
       throw Exception("Error en creación de envío: $e");
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -212,7 +209,6 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
             _campo("Email", email, tipo: TextInputType.emailAddress),
             _campo("Dirección", direccion),
             _campo("Código postal", codigoPostal, tipo: TextInputType.number),
-
             const SizedBox(height: 20),
 
             const Text("Método de pago",
@@ -233,7 +229,6 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
                 border: OutlineInputBorder(),
               ),
             ),
-
             const SizedBox(height: 20),
 
             const Text("Empresa de envío",
@@ -274,7 +269,6 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
                 );
               }),
             ),
-
             const SizedBox(height: 30),
 
             Text(
@@ -291,12 +285,15 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
               "Total a pagar: €${(totalCarrito + precioEnvio).toStringAsFixed(2)}",
               style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
             ),
-
             const SizedBox(height: 30),
 
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF0056B3),
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                ),
                 onPressed: () async {
                   if (metodoPago == null || empresaSeleccionada == null) {
                     ScaffoldMessenger.of(context).showSnackBar(
@@ -304,11 +301,13 @@ class _RealizarPedidoPageState extends State<RealizarPedidoPage> {
                     );
                     return;
                   }
-
                   await _cerrarPedido();
                   Navigator.pop(context);
                 },
-                child: const Text("Realizar Pedido"),
+                child: const Text(
+                  "Continuar",
+                  style: TextStyle(fontSize: 18, color: Colors.white),
+                ),
               ),
             ),
           ],

@@ -62,7 +62,7 @@ class _CambiarDatosClientePageState extends State<CambiarDatosClientePage> {
       telefonoController.text = data['telefono'] ?? "";
       direccionController.text = data['direccion'] ?? "";
       ciudadController.text = data['ciudad'] ?? "";
-      codigoPostalController.text = data['codigoPostal'] ?? "";
+      codigoPostalController.text = data['codigo_postal'] ?? "";
       paisController.text = data['pais'] ?? "";
     }
 
@@ -83,7 +83,7 @@ class _CambiarDatosClientePageState extends State<CambiarDatosClientePage> {
       "telefono": telefonoController.text.trim(),
       "direccion": direccionController.text.trim(),
       "ciudad": ciudadController.text.trim(),
-      "codigoPostal": codigoPostalController.text.trim(),
+      "codigo_postal": codigoPostalController.text.trim(),
       "pais": paisController.text.trim(),
     });
 
@@ -184,7 +184,6 @@ class _CambiarDatosClientePageState extends State<CambiarDatosClientePage> {
             ),
             const SizedBox(height: 15),
 
-            // Botón cancelar
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -195,14 +194,12 @@ class _CambiarDatosClientePageState extends State<CambiarDatosClientePage> {
                 ),
                 child: const Text(
                   "Cancelar",
-                  style: TextStyle(fontSize: 18, color: Colors.black),
+                  style: TextStyle(fontSize: 18, color: Colors.white),
                 ),
               ),
             ),
-
             const SizedBox(height: 20),
 
-            // Botón modificar
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -213,7 +210,7 @@ class _CambiarDatosClientePageState extends State<CambiarDatosClientePage> {
                 ),
                 child: const Text(
                   "Modificar datos",
-                  style: TextStyle(fontSize: 18, color: Colors.black),
+                  style: TextStyle(fontSize: 18, color: Colors.white),
                 ),
               ),
             ),

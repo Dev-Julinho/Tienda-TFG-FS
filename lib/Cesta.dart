@@ -169,7 +169,6 @@ class _CarritoPageState extends State<CarritoPage> {
               },
             ),
           ),
-
           _footer(),
         ],
       ),
@@ -215,7 +214,6 @@ class _CarritoPageState extends State<CarritoPage> {
                   style: TextStyle(fontSize: 18)),
             ),
           ),
-
           const SizedBox(height: 10),
 
           SizedBox(
@@ -237,7 +235,6 @@ class _CarritoPageState extends State<CarritoPage> {
               ),
             ),
           ),
-
         ],
       ),
     );

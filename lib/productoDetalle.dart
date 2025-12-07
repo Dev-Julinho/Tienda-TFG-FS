@@ -99,7 +99,6 @@ class _ProductoDetalleState extends State<ProductoDetalle> {
       ),
       body: Column(
         children: [
-          // Imagen del producto
           Container(
             width: double.infinity,
             height: 250,
@@ -129,7 +128,6 @@ class _ProductoDetalleState extends State<ProductoDetalle> {
                           fontWeight: FontWeight.w600)),
                   const SizedBox(height: 20),
 
-                  // Dropdown de tallas
                   if (stockProducto.isNotEmpty) ...[
                     const Text("Selecciona talla:",
                         style: TextStyle(
@@ -169,17 +167,14 @@ class _ProductoDetalleState extends State<ProductoDetalle> {
                     const SizedBox(height: 20),
                   ],
 
-                  // Descripción del producto
                   Text(
                     widget.producto.descripcion.isNotEmpty
                         ? widget.producto.descripcion
                         : "Sin descripción disponible",
                     style: const TextStyle(fontSize: 18),
                   ),
-
                   const SizedBox(height: 30),
 
-                  // Productos relacionados (deslizante)
                   if (!loadingCategoria && productosCategoria.isNotEmpty) ...[
                     const Text("Más productos de esta categoría:",
                         style: TextStyle(
@@ -238,7 +233,6 @@ class _ProductoDetalleState extends State<ProductoDetalle> {
             ),
           ),
 
-          // Botón añadir al carrito
           Padding(
             padding: const EdgeInsets.all(20),
             child: SizedBox(
@@ -259,7 +253,6 @@ class _ProductoDetalleState extends State<ProductoDetalle> {
                     producto: widget.producto,
                     stockSeleccionado: stockSeleccionado,
                   );
-
                   setState(() {});
 
                   ScaffoldMessenger.of(context).showSnackBar(

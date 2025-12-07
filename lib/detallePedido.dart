@@ -29,9 +29,7 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
     HttpClient httpClient = HttpClient()
       ..badCertificateCallback =
           (X509Certificate cert, String host, int port) => true;
-
     ioClient = IOClient(httpClient);
-
     _cargarProductos();
     _cargarEmpresaEnvio();
   }
@@ -53,7 +51,6 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
         });
         return;
       }
-
       final data = jsonDecode(res.body);
       final List<dynamic> lista = data["records"] ?? [];
 
@@ -94,7 +91,6 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
           "talla": talla,
         });
       }
-
       setState(() {
         productos = temp;
         cargando = false;
@@ -208,7 +204,6 @@ class _DetallePedidoPageState extends State<DetallePedidoPage> {
                     ),
                   );
                 }
-
                 final prod = productos[index];
 
                 return Card(

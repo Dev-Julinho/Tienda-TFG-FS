@@ -195,8 +195,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                     ),
                   ),
 
-
-                  // Imagen
                   ClipRRect(
                     borderRadius: BorderRadius.vertical(bottom: Radius.circular(22)),
                     child: Image.network(
