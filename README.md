@@ -17,7 +17,7 @@ La aplicación ha sido desarrollada en **Flutter** y está enfocada en ofrecer u
 
 ---
 
-## 🎯 Objetivo del proyecto
+## Objetivo del proyecto
 
 El objetivo de este TFG es desarrollar una aplicación funcional de comercio electrónico enfocada en el ámbito deportivo, aplicando los conocimientos adquiridos durante el ciclo de DAM, tales como:
 
