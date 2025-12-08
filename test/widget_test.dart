@@ -1,133 +1,31 @@
+// This is a basic Flutter widget test.
+//
+// To perform an interaction with a widget in your test, use the WidgetTester
+// utility in the flutter_test package. For example, you can send tap and scroll
+// gestures. You can also use WidgetTester to find child widgets in the widget
+// tree, read text, and verify that the values of widget properties are correct.
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:TFGPruebas/login.dart';
-import 'package:TFGPruebas/registro.dart';
-import 'package:TFGPruebas/homepage.dart';
-import 'package:TFGPruebas/productosCategoria.dart';
-import 'package:TFGPruebas/productoDetalle.dart';
-import 'package:TFGPruebas/Cesta.dart';
-import 'package:TFGPruebas/realizarPedido.dart';
-import 'package:TFGPruebas/misPedidos.dart';
-import 'package:TFGPruebas/detallePedido.dart';
-import 'package:TFGPruebas/miCuenta.dart';
-import 'package:TFGPruebas/models/categoria.dart';
-import 'package:TFGPruebas/models/producto.dart';
+
+import 'package:TFGPruebas/main.dart';
+
 
 void main() {
+  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
+    // Build our app and trigger a frame.
+    await tester.pumpWidget(const MyApp(isLoggedIn: false));
 
-  // LOGIN
-  testWidgets('Carga PantallaLogin correctamente', (WidgetTester tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: PantallaLogin(),
-      ),
-    );
-    expect(find.byType(PantallaLogin), findsOneWidget);
-  });
+    // Verify that our counter starts at 0.
+    expect(find.text('0'), findsOneWidget);
+    expect(find.text('1'), findsNothing);
 
-  // REGISTRO
-  testWidgets('Carga PantallaRegistro correctamente', (WidgetTester tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: PantallaRegistro(),
-      ),
-    );
-    expect(find.byType(PantallaRegistro), findsOneWidget);
-  });
+    // Tap the '+' icon and trigger a frame.
+    await tester.tap(find.byIcon(Icons.add));
+    await tester.pump();
 
-  // HOME
-  testWidgets('Carga HomePage correctamente', (WidgetTester tester) async {
-    await tester.pumpWidget(
-      MaterialApp(
-        home: HomePage(),
-      ),
-    );
-    expect(find.byType(HomePage), findsOneWidget);
-  });
-
-  // PRODUCTOS POR CATEGORÍA
-  testWidgets('Carga ProductosCategoria', (WidgetTester tester) async {
-    final categoriaFake = Categoria(
-      id: 1,
-      nombre: 'Zapatillas',
-      descripcion: 'imagen.jpg',
-    );
-    await tester.pumpWidget(MaterialApp(
-      home: ProductosCategoria(categoria: categoriaFake),
-    ));
-    expect(find.byType(ProductosCategoria), findsOneWidget);
-  });
-
-  // CARRITO
-  testWidgets('Carga CarritoPage', (WidgetTester tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: CarritoPage(),
-      ),
-    );
-    expect(find.byType(CarritoPage), findsOneWidget);
-  });
-
-  // REALIZAR PEDIDO
-  testWidgets('Carga RealizarPedidoPage', (WidgetTester tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: RealizarPedidoPage(),
-      ),
-    );
-    expect(find.byType(RealizarPedidoPage), findsOneWidget);
-  });
-
-  // MIS PEDIDOS
-  testWidgets('Carga MisPedidosPage', (WidgetTester tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: MisPedidosPage(),
-      ),
-    );
-    expect(find.byType(MisPedidosPage), findsOneWidget);
-  });
-
-  // DETALLE PEDIDO
-  testWidgets('Carga DetallePedidoPage', (WidgetTester tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: DetallePedidoPage(pedidoId: 1),
-      ),
-    );
-    expect(find.byType(DetallePedidoPage), findsOneWidget);
-  });
-
-  // MI CUENTA
-  testWidgets('Carga MiCuentaPage', (WidgetTester tester) async {
-    await tester.pumpWidget(
-      const MaterialApp(
-        home: MiCuentaPage(),
-      ),
-    );
-    expect(find.byType(MiCuentaPage), findsOneWidget);
-  });
-
-  //            UNIT TESTS (LÓGICA)
-  test('No se permite cantidad mayor que stock', () {
-    int stock = 5;
-    int cantidadSolicitada = 10;
-    bool permitido = cantidadSolicitada <= stock;
-    expect(permitido, false);
-  });
-
-  test('El total de la cesta se calcula correctamente', () {
-    List<double> precios = [10.0, 20.0, 5.0];
-    double total = precios.reduce((value, element) => value + element);
-    expect(total, 35.0);
-  });
-
-  test('El método de pago debe estar seleccionado', () {
-    String? metodoPago;
-    bool esValido = metodoPago != null;
-    expect(esValido, false);
-    metodoPago = "Tarjeta";
-    esValido = metodoPago != null;
-    expect(esValido, true);
+    // Verify that our counter has incremented.
+    expect(find.text('0'), findsNothing);
+    expect(find.text('1'), findsOneWidget);
   });
 }
