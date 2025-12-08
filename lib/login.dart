@@ -41,6 +41,7 @@ class _PantallaLoginState extends State<PantallaLogin> {
       HttpClient httpClient = HttpClient()
         ..badCertificateCallback =
             (X509Certificate cert, String host, int port) => true;
+
       IOClient ioClient = IOClient(httpClient);
 
       final response = await ioClient.get(
@@ -55,20 +56,26 @@ class _PantallaLoginState extends State<PantallaLogin> {
           final user = data["records"][0];
           SharedPreferences prefs = await SharedPreferences.getInstance();
 
+          int idCliente = user["id_cliente"];
+
+          await prefs.setInt("id_cliente", idCliente);
+          await prefs.setString("userNombre", user["nombre"]);
+          await prefs.setString("userEmail", user["email"]);
+
           if (_rememberMe) {
             await prefs.setBool("isLoggedIn", true);
           }
 
-          await prefs.setInt("id_cliente", user["id_cliente"]);
-          await prefs.setString("userNombre", user["nombre"]);
-          await prefs.setString("userEmail", user["email"]);
+          String claveTutorial = "tutorial_visto_$idCliente";
 
-          bool tutorialVisto = prefs.getBool("tutorial_visto") ?? false;
+          bool tutorialVisto = prefs.getBool(claveTutorial) ?? false;
 
           if (!tutorialVisto) {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (_) => const TutorialPage()),
+              MaterialPageRoute(builder: (_) => TutorialPage(
+                idCliente: idCliente,
+              )),
             );
           } else {
             Navigator.pushReplacementNamed(context, "/home");
@@ -155,8 +162,8 @@ class _PantallaLoginState extends State<PantallaLogin> {
                           controller: _emailController,
                           keyboardType: TextInputType.emailAddress,
                           style: const TextStyle(color: Colors.white),
-                          decoration: _inputDecoration(
-                              'Correo electrónico', Icons.email),
+                          decoration:
+                          _inputDecoration('Correo electrónico', Icons.email),
                         ),
                         const SizedBox(height: 16),
 
@@ -226,8 +233,8 @@ class _PantallaLoginState extends State<PantallaLogin> {
                                   begin: Alignment.centerLeft,
                                   end: Alignment.centerRight,
                                 ),
-                                borderRadius:
-                                BorderRadius.all(Radius.circular(14)),
+                                borderRadius: BorderRadius.all(
+                                    Radius.circular(14)),
                               ),
                               child: Container(
                                 alignment: Alignment.center,
@@ -287,8 +294,8 @@ class _PantallaLoginState extends State<PantallaLogin> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(
-            color: Color(0xFF5BD1E5), width: 1.5),
+        borderSide:
+        const BorderSide(color: Color(0xFF5BD1E5), width: 1.5),
       ),
     );
   }
