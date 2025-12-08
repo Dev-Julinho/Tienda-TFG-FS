@@ -15,9 +15,7 @@ import 'package:TFGPruebas/models/producto.dart';
 
 void main() {
 
-  /// ============================
-  /// LOGIN
-  /// ============================
+  // LOGIN
   testWidgets('Carga PantallaLogin correctamente', (WidgetTester tester) async {
     await tester.pumpWidget(
       const MaterialApp(
@@ -27,9 +25,7 @@ void main() {
     expect(find.byType(PantallaLogin), findsOneWidget);
   });
 
-  /// ============================
-  /// REGISTRO
-  /// ============================
+  // REGISTRO
   testWidgets('Carga PantallaRegistro correctamente', (WidgetTester tester) async {
     await tester.pumpWidget(
       const MaterialApp(
@@ -39,9 +35,7 @@ void main() {
     expect(find.byType(PantallaRegistro), findsOneWidget);
   });
 
-  /// ============================
-  /// HOME
-  /// ============================
+  // HOME
   testWidgets('Carga HomePage correctamente', (WidgetTester tester) async {
     await tester.pumpWidget(
       MaterialApp(
@@ -51,9 +45,7 @@ void main() {
     expect(find.byType(HomePage), findsOneWidget);
   });
 
-  /// ============================
-  /// PRODUCTOS POR CATEGORÍA
-  /// ============================
+  // PRODUCTOS POR CATEGORÍA
   testWidgets('Carga ProductosCategoria', (WidgetTester tester) async {
     final categoriaFake = Categoria(
       id: 1,
@@ -66,9 +58,7 @@ void main() {
     expect(find.byType(ProductosCategoria), findsOneWidget);
   });
 
-  /// ============================
-  /// CARRITO
-  /// ============================
+  // CARRITO
   testWidgets('Carga CarritoPage', (WidgetTester tester) async {
     await tester.pumpWidget(
       const MaterialApp(
@@ -78,9 +68,7 @@ void main() {
     expect(find.byType(CarritoPage), findsOneWidget);
   });
 
-  /// ============================
-  /// REALIZAR PEDIDO
-  /// ============================
+  // REALIZAR PEDIDO
   testWidgets('Carga RealizarPedidoPage', (WidgetTester tester) async {
     await tester.pumpWidget(
       const MaterialApp(
@@ -90,9 +78,7 @@ void main() {
     expect(find.byType(RealizarPedidoPage), findsOneWidget);
   });
 
-  /// ============================
-  /// MIS PEDIDOS
-  /// ============================
+  // MIS PEDIDOS
   testWidgets('Carga MisPedidosPage', (WidgetTester tester) async {
     await tester.pumpWidget(
       const MaterialApp(
@@ -102,9 +88,7 @@ void main() {
     expect(find.byType(MisPedidosPage), findsOneWidget);
   });
 
-  /// ============================
-  /// DETALLE PEDIDO
-  /// ============================
+  // DETALLE PEDIDO
   testWidgets('Carga DetallePedidoPage', (WidgetTester tester) async {
     await tester.pumpWidget(
       const MaterialApp(
@@ -114,9 +98,7 @@ void main() {
     expect(find.byType(DetallePedidoPage), findsOneWidget);
   });
 
-  /// ============================
-  /// MI CUENTA
-  /// ============================
+  // MI CUENTA
   testWidgets('Carga MiCuentaPage', (WidgetTester tester) async {
     await tester.pumpWidget(
       const MaterialApp(
@@ -126,9 +108,7 @@ void main() {
     expect(find.byType(MiCuentaPage), findsOneWidget);
   });
 
-  /// ############################################
-  ///            UNIT TESTS (LÓGICA)
-  /// ############################################
+  //            UNIT TESTS (LÓGICA)
   test('No se permite cantidad mayor que stock', () {
     int stock = 5;
     int cantidadSolicitada = 10;
